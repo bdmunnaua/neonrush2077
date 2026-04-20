@@ -40,7 +40,7 @@
             color: var(--text);
             font-family: 'Rajdhani', sans-serif;
             overflow: hidden;
-            touch-action: manipulation;
+            touch-action: none;
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
@@ -72,6 +72,7 @@
             display: block;
             width: 100% !important;
             height: 100vh !important;
+            touch-action: none;
         }
 
         /* ===== SCREENS ===== */
@@ -390,71 +391,13 @@
             backdrop-filter: blur(4px);
         }
 
-        /* ===== JOYSTICK ===== */
-        #joystickZone {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            width: 130px;
-            height: 130px;
-            z-index: 60;
-            display: none;
+        /* ===== ANDROID TOUCH FEEDBACK ===== */
+        canvas:active {
+            cursor: grabbing;
         }
-
-        #joystickBase {
-            width: 130px;
-            height: 130px;
-            border-radius: 50%;
-            background: rgba(0,255,255,0.08);
-            border: 2px solid rgba(0,255,255,0.3);
-            position: absolute;
-            top: 0; left: 0;
-            backdrop-filter: blur(4px);
-        }
-
-        #joystickKnob {
-            width: 54px;
-            height: 54px;
-            border-radius: 50%;
-            background: radial-gradient(circle at 35% 35%, rgba(0,255,255,0.9), rgba(0,128,255,0.7));
-            border: 2px solid rgba(0,255,255,0.8);
-            box-shadow: 0 0 16px rgba(0,255,255,0.6);
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            transition: box-shadow 0.1s;
-            pointer-events: none;
-        }
-
-        /* Boost button */
-        #boostBtn {
-            position: absolute;
-            bottom: 35px;
-            right: 25px;
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: rgba(255,102,0,0.15);
-            border: 2px solid rgba(255,102,0,0.6);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            color: var(--orange);
-            z-index: 60;
-            cursor: pointer;
-            backdrop-filter: blur(4px);
-            box-shadow: 0 0 15px rgba(255,102,0,0.3);
-        }
-
-        #boostBtn:active {
-            background: rgba(255,102,0,0.35);
-            box-shadow: 0 0 25px rgba(255,102,0,0.6);
-        }
-
-        @media (pointer: coarse) {
-            #joystickZone { display: block; }
-            #boostBtn { display: flex; }
+        
+        #gameContainer {
+            -webkit-tap-highlight-color: rgba(0, 255, 255, 0.2);
         }
 
         /* ===== GAME OVER SCREEN ===== */
@@ -616,15 +559,6 @@
         <div class="hud-stat">♥ <span id="hLives">3</span></div>
     </div>
 
-    <!-- Joystick -->
-    <div id="joystickZone">
-        <div id="joystickBase"></div>
-        <div id="joystickKnob"></div>
-    </div>
-
-    <!-- Boost Button -->
-    <div id="boostBtn">🚀</div>
-
     <!-- ===== SPLASH SCREEN ===== -->
     <div id="splashScreen" class="screen">
         <div class="game-logo">NEON RUSH<br>2077</div>
@@ -638,8 +572,7 @@
         <div class="card" style="max-width:380px; margin-top:16px;">
             <div class="card-title">🎮 HOW TO PLAY</div>
             <div style="font-size:14px; line-height:1.8; color:rgba(255,255,255,0.6); text-align:left;">
-                ← → Arrow keys or touch to move<br>
-                SPACE or 🚀 button to boost<br>
+                ← → Slide finger anywhere to move<br>
                 Dodge falling obstacles<br>
                 Collect 💰 coins to earn PMT<br>
                 Reach 1000 PMT to withdraw!
@@ -800,8 +733,9 @@
 
 <script>
 // =====================================================
-//  NEON RUSH 2077 — Full PWA Game
+//  NEON RUSH 2077 — Full PWA Game (Android Friendly)
 //  BNB Chain · PMT Token · Play to Earn
+//  MODIFIED: Direct finger drag, no buttons, ship higher
 // =====================================================
 
 // ---- Backend URL — change to your deployed backend ----
@@ -839,7 +773,7 @@ class NeonRush2077 {
         this.setupTouchControls();
         this.gameLoop();
         this.setupPWAInstall();
-        console.log('🎮 NEON RUSH 2077 LOADED — Play to Earn PMT!');
+        console.log('🎮 NEON RUSH 2077 LOADED — Android Friendly | Touch & Drag | No Buttons');
     }
 
     setupCanvas() {
@@ -848,7 +782,8 @@ class NeonRush2077 {
             this.canvas.height = window.innerHeight;
             if (this.state.player) {
                 this.state.player.x = Math.min(this.state.player.x, this.canvas.width - 40);
-                this.state.player.y = this.canvas.height - 100;
+                // Set player higher up for better touch visibility
+                this.state.player.y = this.canvas.height - 220;
             }
         };
         resize();
@@ -876,7 +811,7 @@ class NeonRush2077 {
         document.getElementById('walletBtn').addEventListener('click', () => this.setWallet());
         document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
 
-        // Keyboard
+        // Keyboard (for debugging)
         document.addEventListener('keydown', (e) => {
             this.state.keys[e.key] = true;
             if (!this.state.gameRunning) return;
@@ -901,61 +836,74 @@ class NeonRush2077 {
     }
 
     setupTouchControls() {
-        const zone = document.getElementById('joystickZone');
-        const knob = document.getElementById('joystickKnob');
-        const boostBtn = document.getElementById('boostBtn');
-        const base = document.getElementById('joystickBase');
-
-        const maxDist = 38;
-        let active = false;
-        let startX = 0;
-
-        const getCenter = () => {
-            const r = base.getBoundingClientRect();
-            return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-        };
-
-        const moveKnob = (cx, touch) => {
-            let dx = touch.clientX - cx.x;
-            const dist = Math.min(Math.abs(dx), maxDist);
-            dx = Math.sign(dx) * dist;
-            knob.style.transform = `translate(calc(-50% + ${dx}px), -50%)`;
-
-            // Control player speed based on how far joystick is pushed
-            const ratio = dx / maxDist;
-            if (this.state.gameRunning) {
-                this.state.player.vx = ratio * 10;
-            }
-        };
-
-        zone.addEventListener('touchstart', (e) => {
+        // ANDROID-FRIENDLY DIRECT FINGER DRAG CONTROL
+        // No joystick, no buttons — just slide anywhere on screen
+        
+        const handleTouchMove = (e) => {
             e.preventDefault();
-            active = true;
-            startX = e.touches[0].clientX;
-            knob.style.boxShadow = '0 0 25px rgba(0,255,255,0.9)';
-        }, { passive: false });
-
-        zone.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            if (!active) return;
-            moveKnob(getCenter(), e.touches[0]);
-        }, { passive: false });
-
-        const endJoystick = () => {
-            active = false;
-            knob.style.transform = 'translate(-50%, -50%)';
-            knob.style.boxShadow = '0 0 16px rgba(0,255,255,0.6)';
-            if (this.state.gameRunning) this.state.player.vx = 0;
+            if (!this.state.gameRunning) return;
+            
+            const rect = this.canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            let touchX = touch.clientX - rect.left;
+            
+            // Scale if canvas CSS size differs from actual size
+            const scaleX = this.canvas.width / rect.width;
+            touchX = touchX * scaleX;
+            
+            // Clamp to screen edges with padding
+            const minX = 40;
+            const maxX = this.canvas.width - 40;
+            this.state.player.x = Math.min(maxX, Math.max(minX, touchX));
         };
-
-        zone.addEventListener('touchend', endJoystick);
-        zone.addEventListener('touchcancel', endJoystick);
-
-        // Boost button
-        boostBtn.addEventListener('touchstart', (e) => {
+        
+        const handleTouchStart = (e) => {
             e.preventDefault();
-            if (this.state.gameRunning) this.boost();
+            if (!this.state.gameRunning) return;
+            
+            // Immediately move ship to touch position on first contact
+            const rect = this.canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            let touchX = touch.clientX - rect.left;
+            const scaleX = this.canvas.width / rect.width;
+            touchX = touchX * scaleX;
+            const minX = 40;
+            const maxX = this.canvas.width - 40;
+            this.state.player.x = Math.min(maxX, Math.max(minX, touchX));
+        };
+        
+        // Add touch listeners to the whole canvas
+        this.canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+        this.canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+        this.canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            // Ship stays where it is — no drift
         }, { passive: false });
+        
+        // Also handle mouse for debugging on desktop
+        const handleMouseMove = (e) => {
+            if (!this.state.gameRunning) return;
+            if (e.buttons !== 1) return; // Only when mouse button held
+            const rect = this.canvas.getBoundingClientRect();
+            let mouseX = e.clientX - rect.left;
+            const scaleX = this.canvas.width / rect.width;
+            mouseX = mouseX * scaleX;
+            const minX = 40;
+            const maxX = this.canvas.width - 40;
+            this.state.player.x = Math.min(maxX, Math.max(minX, mouseX));
+        };
+        
+        this.canvas.addEventListener('mousemove', handleMouseMove);
+        this.canvas.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            const rect = this.canvas.getBoundingClientRect();
+            let mouseX = e.clientX - rect.left;
+            const scaleX = this.canvas.width / rect.width;
+            mouseX = mouseX * scaleX;
+            const minX = 40;
+            const maxX = this.canvas.width - 40;
+            this.state.player.x = Math.min(maxX, Math.max(minX, mouseX));
+        });
     }
 
     setupPWAInstall() {
@@ -1097,27 +1045,25 @@ class NeonRush2077 {
         this.state.particles = [];
         this.state.totalHeight = 0;
         this.state.cameraY = 0;
+        
+        // Player starts higher up on screen (Android friendly)
         this.state.player = {
             x: this.canvas.width / 2,
-            y: this.canvas.height - 100,
+            y: this.canvas.height - 220,  // Higher up (was -100)
             width: 50,
             height: 30,
             vx: 0
         };
 
         document.getElementById('hud').style.display = 'flex';
-        document.getElementById('joystickZone').style.display = 'block';
-        document.getElementById('boostBtn').style.display = 'flex';
         this.showScreen(null);
         this.updateHUD();
-        console.log('🚀 Ascending!');
+        console.log('🚀 Ascending! — Android mode: drag finger anywhere');
     }
 
     stopGame() {
         this.state.gameRunning = false;
         document.getElementById('hud').style.display = 'none';
-        document.getElementById('joystickZone').style.display = 'none';
-        document.getElementById('boostBtn').style.display = 'none';
     }
 
     async withdraw() {
@@ -1203,6 +1149,11 @@ class NeonRush2077 {
 
     update() {
         const s = this.state;
+        
+        // Keyboard fallback for debugging
+        if (s.keys['ArrowLeft']) s.player.vx = -9;
+        if (s.keys['ArrowRight']) s.player.vx = 9;
+        
         s.player.x += s.player.vx;
         s.player.x = Math.max(40, Math.min(this.canvas.width - 40, s.player.x));
 
@@ -1333,7 +1284,6 @@ class NeonRush2077 {
             ctx.shadowBlur = 18;
             ctx.fillStyle = o.color;
             ctx.fillRect(o.x - o.width/2, sy, o.width, o.height);
-            // Border highlight
             ctx.strokeStyle = 'rgba(255,255,255,0.3)';
             ctx.lineWidth = 1;
             ctx.strokeRect(o.x - o.width/2, sy, o.width, o.height);
@@ -1387,8 +1337,6 @@ class NeonRush2077 {
     gameOver() {
         this.state.gameRunning = false;
         document.getElementById('hud').style.display = 'none';
-        document.getElementById('joystickZone').style.display = 'none';
-        document.getElementById('boostBtn').style.display = 'none';
 
         const earned = (this.state.score * 0.0005).toFixed(3);
         document.getElementById('finalScore').textContent = this.state.score;
