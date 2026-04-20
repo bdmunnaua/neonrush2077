@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-title" content="NeonRush2077">
     <meta name="description" content="Play Neon Rush 2077 and earn real PMT crypto rewards on BNB Chain!">
     <link rel="manifest" href="manifest.json">
-    <title>NEON RUSH 2077 | Earn PMT Crypto</title>
+    <title>NEON RUSH 2077 | SU-57 Fighter | Earn PMT Crypto</title>
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
@@ -66,12 +66,14 @@
             position: relative;
             width: 100vw;
             height: 100vh;
+            background: #050510;
         }
 
         canvas {
             display: block;
             width: 100% !important;
-            height: 100vh !important;
+            height: calc(100vh - 1cm) !important;
+            margin-top: 1cm;
             touch-action: none;
         }
 
@@ -370,7 +372,9 @@
         /* ===== IN-GAME HUD ===== */
         #hud {
             position: absolute;
-            top: 0; left: 0; right: 0;
+            top: 1cm;
+            left: 0;
+            right: 0;
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
@@ -562,7 +566,7 @@
     <!-- ===== SPLASH SCREEN ===== -->
     <div id="splashScreen" class="screen">
         <div class="game-logo">NEON RUSH<br>2077</div>
-        <p class="tagline">Ascend · Dodge · Earn Crypto</p>
+        <p class="tagline">SU-57 FELON · ASCEND · EARN PMT</p>
 
         <!-- AD SLOT (top banner) -->
         <div class="ad-slot">📢 AD SPACE — Google AdSense Banner (728×90)</div>
@@ -572,7 +576,7 @@
         <div class="card" style="max-width:380px; margin-top:16px;">
             <div class="card-title">🎮 HOW TO PLAY</div>
             <div style="font-size:14px; line-height:1.8; color:rgba(255,255,255,0.6); text-align:left;">
-                ← → Slide finger anywhere to move<br>
+                Slide finger anywhere on screen to move SU-57<br>
                 Dodge falling obstacles<br>
                 Collect 💰 coins to earn PMT<br>
                 Reach 1000 PMT to withdraw!
@@ -697,7 +701,7 @@
     <!-- ===== GAME OVER ===== -->
     <div id="gameOver" class="screen hidden">
         <div class="crash-title">CRASH!</div>
-        <p style="color:rgba(255,255,255,0.4); letter-spacing:3px; font-size:12px; margin-bottom:20px;">LANDING DETECTED</p>
+        <p style="color:rgba(255,255,255,0.4); letter-spacing:3px; font-size:12px; margin-bottom:20px;">SU-57 SHOT DOWN</p>
 
         <!-- AD SLOT (between games is prime ad real estate) -->
         <div class="ad-slot">📢 AD SPACE — Google AdSense Interstitial / Rectangle (300×250)</div>
@@ -733,9 +737,9 @@
 
 <script>
 // =====================================================
-//  NEON RUSH 2077 — Full PWA Game (Android Friendly)
+//  NEON RUSH 2077 — SU-57 Fighter Jet Edition
+//  Android Friendly: Moved 1cm up, No controls, Touch anywhere
 //  BNB Chain · PMT Token · Play to Earn
-//  MODIFIED: Direct finger drag, no buttons, ship higher
 // =====================================================
 
 // ---- Backend URL — change to your deployed backend ----
@@ -757,7 +761,7 @@ class NeonRush2077 {
             lives: 3,
             gameRunning: false,
             scrollSpeed: 4,
-            player: { x: 400, y: 500, width: 50, height: 30, vx: 0 },
+            player: { x: 400, y: 500, width: 55, height: 35, vx: 0 },
             obstacles: [],
             coins: [],
             particles: [],
@@ -773,17 +777,17 @@ class NeonRush2077 {
         this.setupTouchControls();
         this.gameLoop();
         this.setupPWAInstall();
-        console.log('🎮 NEON RUSH 2077 LOADED — Android Friendly | Touch & Drag | No Buttons');
+        console.log('🎮 NEON RUSH 2077 — SU-57 Fighter | Android Friendly | Touch Anywhere');
     }
 
     setupCanvas() {
         const resize = () => {
             this.canvas.width = window.innerWidth;
-            this.canvas.height = window.innerHeight;
+            this.canvas.height = window.innerHeight - 38; // Adjust for 1cm margin (~38px)
             if (this.state.player) {
-                this.state.player.x = Math.min(this.state.player.x, this.canvas.width - 40);
-                // Set player higher up for better touch visibility
-                this.state.player.y = this.canvas.height - 220;
+                this.state.player.x = Math.min(this.state.player.x, this.canvas.width - 45);
+                // SU-57 positioned higher (moved up with canvas)
+                this.state.player.y = this.canvas.height - 200;
             }
         };
         resize();
@@ -811,7 +815,7 @@ class NeonRush2077 {
         document.getElementById('walletBtn').addEventListener('click', () => this.setWallet());
         document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
 
-        // Keyboard (for debugging)
+        // Keyboard fallback for debugging
         document.addEventListener('keydown', (e) => {
             this.state.keys[e.key] = true;
             if (!this.state.gameRunning) return;
@@ -836,24 +840,29 @@ class NeonRush2077 {
     }
 
     setupTouchControls() {
-        // ANDROID-FRIENDLY DIRECT FINGER DRAG CONTROL
-        // No joystick, no buttons — just slide anywhere on screen
+        // ANDROID: Touch anywhere on screen (canvas + empty bottom area)
+        // Get the actual canvas position to map touches correctly
+        
+        const getCanvasTouchX = (clientX) => {
+            const rect = this.canvas.getBoundingClientRect();
+            let touchX = clientX - rect.left;
+            // Clamp to canvas bounds
+            touchX = Math.max(0, Math.min(rect.width, touchX));
+            // Scale to canvas pixel dimensions
+            const scaleX = this.canvas.width / rect.width;
+            return touchX * scaleX;
+        };
         
         const handleTouchMove = (e) => {
             e.preventDefault();
             if (!this.state.gameRunning) return;
             
-            const rect = this.canvas.getBoundingClientRect();
             const touch = e.touches[0];
-            let touchX = touch.clientX - rect.left;
-            
-            // Scale if canvas CSS size differs from actual size
-            const scaleX = this.canvas.width / rect.width;
-            touchX = touchX * scaleX;
+            let touchX = getCanvasTouchX(touch.clientX);
             
             // Clamp to screen edges with padding
-            const minX = 40;
-            const maxX = this.canvas.width - 40;
+            const minX = 45;
+            const maxX = this.canvas.width - 45;
             this.state.player.x = Math.min(maxX, Math.max(minX, touchX));
         };
         
@@ -861,47 +870,43 @@ class NeonRush2077 {
             e.preventDefault();
             if (!this.state.gameRunning) return;
             
-            // Immediately move ship to touch position on first contact
-            const rect = this.canvas.getBoundingClientRect();
             const touch = e.touches[0];
-            let touchX = touch.clientX - rect.left;
-            const scaleX = this.canvas.width / rect.width;
-            touchX = touchX * scaleX;
-            const minX = 40;
-            const maxX = this.canvas.width - 40;
+            let touchX = getCanvasTouchX(touch.clientX);
+            const minX = 45;
+            const maxX = this.canvas.width - 45;
             this.state.player.x = Math.min(maxX, Math.max(minX, touchX));
         };
         
-        // Add touch listeners to the whole canvas
-        this.canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-        this.canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-        this.canvas.addEventListener('touchend', (e) => {
+        // Add touch listeners to the whole window (so empty bottom area works)
+        window.addEventListener('touchstart', handleTouchStart, { passive: false });
+        window.addEventListener('touchmove', handleTouchMove, { passive: false });
+        window.addEventListener('touchend', (e) => {
             e.preventDefault();
-            // Ship stays where it is — no drift
         }, { passive: false });
         
-        // Also handle mouse for debugging on desktop
+        // Mouse support for debugging
         const handleMouseMove = (e) => {
             if (!this.state.gameRunning) return;
-            if (e.buttons !== 1) return; // Only when mouse button held
+            if (e.buttons !== 1) return;
             const rect = this.canvas.getBoundingClientRect();
             let mouseX = e.clientX - rect.left;
+            if (mouseX < 0 || mouseX > rect.width) return;
             const scaleX = this.canvas.width / rect.width;
             mouseX = mouseX * scaleX;
-            const minX = 40;
-            const maxX = this.canvas.width - 40;
+            const minX = 45;
+            const maxX = this.canvas.width - 45;
             this.state.player.x = Math.min(maxX, Math.max(minX, mouseX));
         };
         
         this.canvas.addEventListener('mousemove', handleMouseMove);
         this.canvas.addEventListener('mousedown', (e) => {
-            e.preventDefault();
             const rect = this.canvas.getBoundingClientRect();
             let mouseX = e.clientX - rect.left;
+            if (mouseX < 0 || mouseX > rect.width) return;
             const scaleX = this.canvas.width / rect.width;
             mouseX = mouseX * scaleX;
-            const minX = 40;
-            const maxX = this.canvas.width - 40;
+            const minX = 45;
+            const maxX = this.canvas.width - 45;
             this.state.player.x = Math.min(maxX, Math.max(minX, mouseX));
         });
     }
@@ -1046,19 +1051,19 @@ class NeonRush2077 {
         this.state.totalHeight = 0;
         this.state.cameraY = 0;
         
-        // Player starts higher up on screen (Android friendly)
+        // SU-57 Fighter Jet starting position (moved up with canvas)
         this.state.player = {
             x: this.canvas.width / 2,
-            y: this.canvas.height - 220,  // Higher up (was -100)
-            width: 50,
-            height: 30,
+            y: this.canvas.height - 200,
+            width: 55,
+            height: 35,
             vx: 0
         };
 
         document.getElementById('hud').style.display = 'flex';
         this.showScreen(null);
         this.updateHUD();
-        console.log('🚀 Ascending! — Android mode: drag finger anywhere');
+        console.log('🚀 SU-57 Takeoff! — Touch anywhere to fly');
     }
 
     stopGame() {
@@ -1150,12 +1155,12 @@ class NeonRush2077 {
     update() {
         const s = this.state;
         
-        // Keyboard fallback for debugging
+        // Keyboard fallback
         if (s.keys['ArrowLeft']) s.player.vx = -9;
         if (s.keys['ArrowRight']) s.player.vx = 9;
         
         s.player.x += s.player.vx;
-        s.player.x = Math.max(40, Math.min(this.canvas.width - 40, s.player.x));
+        s.player.x = Math.max(45, Math.min(this.canvas.width - 45, s.player.x));
 
         s.cameraY -= s.scrollSpeed;
         s.totalHeight += s.scrollSpeed;
@@ -1254,28 +1259,109 @@ class NeonRush2077 {
         ctx.fillStyle = neb;
         ctx.fillRect(0, 0, W, H);
 
-        // Player — spaceship
-        const px = s.player.x, py = s.player.y;
+        // ============ SU-57 FELON FIGHTER JET ============
+        const px = s.player.x;
+        const py = s.player.y;
+        
+        ctx.save();
         ctx.shadowColor = '#00ffff';
-        ctx.shadowBlur = 20;
-        ctx.fillStyle = '#00ffff';
-        ctx.beginPath();
-        ctx.moveTo(px, py);
-        ctx.lineTo(px - 25, py + 30);
-        ctx.lineTo(px + 25, py + 30);
-        ctx.closePath();
-        ctx.fill();
-        // Engine flame
-        ctx.fillStyle = '#ff6600';
-        ctx.shadowColor = '#ff6600';
         ctx.shadowBlur = 15;
+        
+        // Main fuselage (dark gray/stealth)
+        ctx.fillStyle = '#3a3a4a';
         ctx.beginPath();
-        ctx.moveTo(px - 14, py + 30);
-        ctx.lineTo(px, py + 46);
-        ctx.lineTo(px + 14, py + 30);
+        ctx.moveTo(px, py);                           // Nose tip
+        ctx.lineTo(px - 12, py + 12);                 // Left canopy area
+        ctx.lineTo(px - 22, py + 28);                 // Left wing root
+        ctx.lineTo(px - 32, py + 32);                 // Left wingtip
+        ctx.lineTo(px - 18, py + 34);                 // Left tail
+        ctx.lineTo(px, py + 38);                      // Center back
+        ctx.lineTo(px + 18, py + 34);                 // Right tail
+        ctx.lineTo(px + 32, py + 32);                 // Right wingtip
+        ctx.lineTo(px + 22, py + 28);                 // Right wing root
+        ctx.lineTo(px + 12, py + 12);                 // Right canopy area
         ctx.closePath();
         ctx.fill();
-        ctx.shadowBlur = 0;
+        
+        // Cockpit (cyan glow)
+        ctx.fillStyle = '#00ccff';
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.ellipse(px, py + 6, 6, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Wing sweep lines
+        ctx.strokeStyle = '#00ffff';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(px - 8, py + 18);
+        ctx.lineTo(px - 28, py + 30);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(px + 8, py + 18);
+        ctx.lineTo(px + 28, py + 30);
+        ctx.stroke();
+        
+        // Twin vertical stabilizers (tails)
+        ctx.fillStyle = '#2a2a3a';
+        ctx.beginPath();
+        ctx.moveTo(px - 12, py + 30);
+        ctx.lineTo(px - 8, py + 22);
+        ctx.lineTo(px - 4, py + 30);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(px + 12, py + 30);
+        ctx.lineTo(px + 8, py + 22);
+        ctx.lineTo(px + 4, py + 30);
+        ctx.fill();
+        
+        // Afterburner / Engine glow
+        const flameSize = 12 + Math.random() * 6;
+        ctx.fillStyle = '#ff4400';
+        ctx.shadowColor = '#ff6600';
+        ctx.shadowBlur = 18;
+        ctx.beginPath();
+        ctx.moveTo(px - 6, py + 38);
+        ctx.lineTo(px, py + 42 + Math.random() * 4);
+        ctx.lineTo(px + 6, py + 38);
+        ctx.fill();
+        
+        ctx.fillStyle = '#ffaa00';
+        ctx.beginPath();
+        ctx.moveTo(px - 4, py + 38);
+        ctx.lineTo(px, py + 40 + Math.random() * 3);
+        ctx.lineTo(px + 4, py + 38);
+        ctx.fill();
+        
+        // Canopy highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.beginPath();
+        ctx.ellipse(px - 2, py + 4, 2, 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Red star marking (Russian style)
+        ctx.fillStyle = '#ff0000';
+        ctx.shadowBlur = 5;
+        ctx.beginPath();
+        ctx.moveTo(px - 20, py + 22);
+        ctx.lineTo(px - 18, py + 19);
+        ctx.lineTo(px - 16, py + 22);
+        ctx.lineTo(px - 19, py + 21);
+        ctx.fill();
+        
+        ctx.restore();
+        
+        // Speed trails when moving fast
+        if (Math.abs(s.player.vx) > 3) {
+            ctx.fillStyle = 'rgba(0,255,255,0.3)';
+            for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(px - (s.player.vx > 0 ? 25 : -25), py + 30);
+                ctx.lineTo(px - (s.player.vx > 0 ? 40 : -40), py + 28);
+                ctx.lineTo(px - (s.player.vx > 0 ? 40 : -40), py + 32);
+                ctx.fill();
+            }
+        }
 
         // Obstacles
         s.obstacles.forEach(o => {
@@ -1320,7 +1406,7 @@ class NeonRush2077 {
             ctx.restore();
         });
 
-        // Speed lines when fast
+        // Speed lines
         if (s.scrollSpeed > 7) {
             ctx.strokeStyle = 'rgba(0,255,255,0.05)';
             ctx.lineWidth = 1;
