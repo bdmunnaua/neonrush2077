@@ -56,7 +56,6 @@
             z-index: 1;
         }
 
-        /* Screens - HIGHER Z-INDEX than canvas */
         .screen {
             position: fixed;
             top: 0;
@@ -75,7 +74,6 @@
         }
         .hidden { display: none !important; }
 
-        /* HUD - above canvas but below screens */
         #hud {
             position: fixed;
             top: 10px;
@@ -299,11 +297,34 @@
             justify-content: space-between;
             z-index: 1000;
         }
+
+        /* PC Keyboard Hint */
+        .keyboard-hint {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(0,255,255,0.3);
+            border-radius: 8px;
+            padding: 8px 15px;
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            color: #00ffff;
+            z-index: 200;
+            pointer-events: none;
+            backdrop-filter: blur(5px);
+        }
+        @media (max-width: 768px) {
+            .keyboard-hint { display: none; }
+        }
     </style>
 </head>
 <body>
 <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
+    
+    <!-- PC Keyboard Hint (hidden on mobile) -->
+    <div class="keyboard-hint">← →  ARROW KEYS TO MOVE SU-57</div>
 
     <div id="hud" style="display:none;">
         <div class="hud-stat">LVL <span id="hLevel">1</span></div>
@@ -322,7 +343,8 @@
         <div class="card">
             <div class="card-title">🎮 HOW TO PLAY</div>
             <div style="font-size:14px; color:rgba(255,255,255,0.6);">
-                👆 Touch & slide anywhere on screen<br>
+                🖥️ PC: ← → Arrow keys to move<br>
+                📱 Mobile: Touch & slide anywhere<br>
                 Dodge obstacles • Collect coins<br>
                 Earn PMT • Withdraw at 1000 PMT
             </div>
@@ -410,7 +432,7 @@
 
 <script>
 // =====================================================
-// NEON RUSH 2077 — ANDROID FIXED (Buttons Working)
+// NEON RUSH 2077 — PC Keyboard + Android Touch WORKING
 // =====================================================
 
 function togglePassword(inputId, icon) {
@@ -428,6 +450,10 @@ class NeonRush2077 {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
+        
+        // Keyboard state
+        this.leftPressed = false;
+        this.rightPressed = false;
         
         this.state = {
             loggedIn: false,
@@ -455,6 +481,7 @@ class NeonRush2077 {
     init() {
         this.resize();
         this.setupButtons();
+        this.setupKeyboard();
         this.setupTouch();
         this.gameLoop();
         this.setupPWA();
@@ -462,7 +489,7 @@ class NeonRush2077 {
         window.addEventListener('resize', () => this.resize());
         window.addEventListener('orientationchange', () => setTimeout(() => this.resize(), 100));
         
-        console.log('Game loaded — Android ready');
+        console.log('Game loaded — PC Arrow Keys + Android Touch ready');
     }
     
     resize() {
@@ -475,36 +502,24 @@ class NeonRush2077 {
     }
     
     setupButtons() {
-        // Splash to Auth
         document.getElementById('startBtn').onclick = (e) => {
             e.preventDefault();
-            console.log('Start button clicked');
             this.showScreen('authScreen');
         };
-        
-        // Auth back
         document.getElementById('backToStartBtn').onclick = (e) => {
             e.preventDefault();
             this.showScreen('splashScreen');
         };
-        
-        // Tabs
         document.getElementById('registerTab').onclick = () => this.switchTab('register');
         document.getElementById('loginTab').onclick = () => this.switchTab('login');
-        
-        // Register
         document.getElementById('registerBtn').onclick = (e) => {
             e.preventDefault();
             this.register();
         };
-        
-        // Login
         document.getElementById('loginBtn').onclick = (e) => {
             e.preventDefault();
             this.login();
         };
-        
-        // Main menu buttons
         document.getElementById('playBtn').onclick = (e) => {
             e.preventDefault();
             this.startGame();
@@ -532,8 +547,30 @@ class NeonRush2077 {
         };
     }
     
+    setupKeyboard() {
+        // PC Keyboard controls — using window event listeners
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                this.leftPressed = true;
+                e.preventDefault();
+            } else if (e.key === 'ArrowRight') {
+                this.rightPressed = true;
+                e.preventDefault();
+            }
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft') {
+                this.leftPressed = false;
+                e.preventDefault();
+            } else if (e.key === 'ArrowRight') {
+                this.rightPressed = false;
+                e.preventDefault();
+            }
+        });
+    }
+    
     setupTouch() {
-        // Only enable touch movement when game is running
         const moveShip = (clientX) => {
             if (!this.state.gameRunning) return;
             const rect = this.canvas.getBoundingClientRect();
@@ -556,9 +593,18 @@ class NeonRush2077 {
             }
         }, { passive: false });
         
-        // Mouse for PC testing
+        // Mouse for PC touchpad
         this.canvas.addEventListener('mousemove', (e) => {
             if (this.state.gameRunning && e.buttons === 1) {
+                const rect = this.canvas.getBoundingClientRect();
+                let x = e.clientX - rect.left;
+                x = Math.max(45, Math.min(this.canvas.width - 45, (x / rect.width) * this.canvas.width));
+                this.state.player.x = x;
+            }
+        });
+        
+        this.canvas.addEventListener('mousedown', (e) => {
+            if (this.state.gameRunning) {
                 const rect = this.canvas.getBoundingClientRect();
                 let x = e.clientX - rect.left;
                 x = Math.max(45, Math.min(this.canvas.width - 45, (x / rect.width) * this.canvas.width));
@@ -801,6 +847,18 @@ class NeonRush2077 {
     
     update() {
         const s = this.state;
+        
+        // PC KEYBOARD MOVEMENT
+        const MOVE_SPEED = 8;
+        if (this.leftPressed) {
+            s.player.x -= MOVE_SPEED;
+        }
+        if (this.rightPressed) {
+            s.player.x += MOVE_SPEED;
+        }
+        
+        // Clamp player position
+        s.player.x = Math.max(45, Math.min(this.canvas.width - 45, s.player.x));
         
         s.cameraY -= s.scrollSpeed;
         s.totalHeight += s.scrollSpeed;
@@ -1078,7 +1136,7 @@ class NeonRush2077 {
 
 // Start the game
 window.addEventListener('load', () => {
-    console.log('Page loaded, starting game...');
+    console.log('Page loaded — NEON RUSH 2077');
     new NeonRush2077();
 });
 </script>
