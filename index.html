@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#00ffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NeonRush2077">
+    <meta name="description" content="Play Neon Rush 2077 and earn real PMT crypto rewards on BNB Chain!">
+    <link rel="manifest" href="manifest.json">
+    <title>NEON RUSH 2077 | SU-57 Fighter | Earn PMT Crypto</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --cyan: #00ffff;
+            --magenta: #ff00ff;
+            --orange: #ff6600;
+            --yellow: #ffdd00;
+            --dark: #050510;
+            --darker: #020208;
+            --card: rgba(0,255,255,0.07);
+            --border: rgba(0,255,255,0.25);
+            --text: #e0f7ff;
+        }
+
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+
+        body {
+            background: #050510;
+            color: var(--text);
+            font-family: 'Rajdhani', sans-serif;
+            overflow: hidden;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #gameContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #050510;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+
+        .screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(160deg, #050510 0%, #0a0a20 60%, #050518 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            text-align: center;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .screen::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 20% 20%, rgba(0,255,255,0.08) 0%, transparent 60%),
+                        radial-gradient(ellipse at 80% 80%, rgba(255,0,255,0.06) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .hidden { display: none !important; }
+
+        .game-logo {
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            font-size: clamp(2rem, 8vw, 4.5rem);
+            background: linear-gradient(90deg, #00ffff, #ff00ff, #00ffff);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 3s linear infinite;
+            letter-spacing: 2px;
+            filter: drop-shadow(0 0 20px rgba(0,255,255,0.5));
+            line-height: 1.1;
+        }
+
+        @keyframes shimmer {
+            to { background-position: 200% center; }
+        }
+
+        .tagline {
+            color: var(--cyan);
+            font-size: clamp(0.9rem, 3vw, 1.2rem);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin: 10px 0 30px;
+            opacity: 0.8;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, rgba(0,255,255,0.15), rgba(0,128,255,0.15));
+            color: var(--cyan);
+            border: 1.5px solid var(--cyan);
+            padding: 14px 32px;
+            margin: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(12px, 3vw, 15px);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 15px rgba(0,255,255,0.2), inset 0 0 15px rgba(0,255,255,0.05);
+            min-width: 220px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,255,255,0.15), transparent);
+            transition: left 0.4s;
+        }
+
+        .btn:hover::before { left: 100%; }
+
+        .btn-secondary {
+            color: #aaa;
+            border-color: #444;
+            background: rgba(255,255,255,0.04);
+            box-shadow: none;
+        }
+
+        .btn-gold {
+            color: var(--yellow);
+            border-color: var(--yellow);
+            background: linear-gradient(135deg, rgba(255,221,0,0.1), rgba(255,102,0,0.1));
+            box-shadow: 0 0 15px rgba(255,221,0,0.2);
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px 24px;
+            margin: 12px 0;
+            width: 100%;
+            max-width: 420px;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-title {
+            font-family: 'Orbitron', monospace;
+            color: var(--cyan);
+            font-size: 13px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(0,255,255,0.06);
+            font-size: 14px;
+        }
+
+        .stat-label { color: rgba(255,255,255,0.5); }
+        .stat-value { color: var(--cyan); font-weight: 700; font-family: 'Orbitron', monospace; font-size: 13px; }
+
+        .progress-wrap { margin: 10px 0 4px; }
+        .progress-bar {
+            background: rgba(0,255,255,0.1);
+            border-radius: 20px;
+            height: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(0,255,255,0.2);
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--cyan), #0080ff);
+            border-radius: 20px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 8px var(--cyan);
+        }
+        .progress-label {
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        .withdrawal-card {
+            background: linear-gradient(135deg, rgba(255,107,107,0.12), rgba(238,90,36,0.12));
+            border: 1px solid rgba(255,107,107,0.4);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 12px 0;
+            max-width: 420px;
+            width: 100%;
+        }
+
+        .notice-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .notice-item { font-size: 13px; color: rgba(255,255,255,0.7); }
+        .notice-item strong {
+            color: var(--yellow);
+            display: block;
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .form-wrap {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 28px;
+            max-width: 400px;
+            width: 100%;
+            margin: 12px 0;
+        }
+        .form-group { margin-bottom: 16px; text-align: left; }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--cyan);
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-family: 'Orbitron', monospace;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid rgba(0,255,255,0.3);
+            border-radius: 4px;
+            background: rgba(0,0,0,0.4);
+            color: white;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 16px;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--cyan);
+            box-shadow: 0 0 12px rgba(0,255,255,0.25);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .tab {
+            flex: 1;
+            padding: 10px 16px;
+            background: rgba(0,255,255,0.05);
+            border: 1px solid rgba(0,255,255,0.2);
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+        }
+        .tab.active {
+            background: linear-gradient(135deg, rgba(0,255,255,0.2), rgba(0,128,255,0.2));
+            border-color: var(--cyan);
+            color: var(--cyan);
+        }
+
+        #hud {
+            position: fixed;
+            top: 10px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 12px 16px;
+            z-index: 50;
+            pointer-events: none;
+        }
+        .hud-stat {
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(0,255,255,0.3);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(9px, 2vw, 13px);
+            color: var(--cyan);
+            text-shadow: 0 0 8px var(--cyan);
+            backdrop-filter: blur(4px);
+        }
+
+        .crash-title {
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            font-size: clamp(2rem, 8vw, 3.5rem);
+            color: #ff0066;
+            text-shadow: 0 0 30px #ff0066;
+            margin-bottom: 10px;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin: 16px 0;
+            max-width: 420px;
+            width: 100%;
+        }
+        .result-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 10px;
+            text-align: center;
+        }
+        .result-label { font-size: 11px; color: rgba(255,255,255,0.4); text-transform: uppercase; margin-bottom: 6px; }
+        .result-value { font-family: 'Orbitron', monospace; font-size: clamp(14px, 3vw, 20px); font-weight: 700; color: var(--cyan); }
+        .result-value.pmt { color: var(--yellow); }
+
+        .ad-slot {
+            background: rgba(255,255,255,0.03);
+            border: 1px dashed rgba(255,255,255,0.1);
+            border-radius: 4px;
+            padding: 8px;
+            text-align: center;
+            font-size: 11px;
+            color: rgba(255,255,255,0.2);
+            margin: 8px 0;
+            max-width: 420px;
+            width: 100%;
+        }
+
+        #installBanner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, rgba(0,255,255,0.15), rgba(0,128,255,0.15));
+            border-top: 1px solid var(--cyan);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        #installBanner p { font-size: 13px; color: var(--cyan); font-family: 'Orbitron', monospace; }
+        .install-yes { background: var(--cyan); color: #000; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; }
+        .install-no { background: transparent; color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+
+        .wallet-note { color: rgba(255,221,0,0.7); font-size: 12px; margin: 8px 0 16px; font-style: italic; }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 0 15px rgba(0,255,255,0.3); } 50% { box-shadow: 0 0 30px rgba(0,255,255,0.7); } }
+        .btn-pulse { animation: pulse 2s infinite; }
+        
+        /* PC Keyboard hint */
+        .keyboard-hint {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(0,255,255,0.3);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 11px;
+            color: rgba(0,255,255,0.6);
+            font-family: 'Orbitron', monospace;
+            z-index: 60;
+            pointer-events: none;
+        }
+        
+        @media (max-width: 768px) {
+            .keyboard-hint { display: none; }
+        }
+    </style>
+</head>
+<body>
+<div id="gameContainer">
+    <canvas id="gameCanvas"></canvas>
+    
+    <!-- PC Keyboard hint (hidden on mobile) -->
+    <div class="keyboard-hint">← →  ARROW KEYS TO MOVE</div>
+
+    <div id="hud" style="display:none;">
+        <div class="hud-stat">LVL <span id="hLevel">1</span></div>
+        <div class="hud-stat">⬆ <span id="hHeight">0</span>m</div>
+        <div class="hud-stat">★ <span id="hScore">0</span></div>
+        <div class="hud-stat">PMT <span id="hPmt">0.000</span></div>
+        <div class="hud-stat">♥ <span id="hLives">3</span></div>
+    </div>
+
+    <div id="splashScreen" class="screen">
+        <div class="game-logo">NEON RUSH<br>2077</div>
+        <p class="tagline">SU-57 FELON · ASCEND · EARN PMT</p>
+        <div class="ad-slot">📢 AD SPACE — Google AdSense</div>
+        <button class="btn btn-pulse" id="startBtn">▶ PLAY TO EARN</button>
+        <div class="card" style="max-width:380px; margin-top:16px;">
+            <div class="card-title">🎮 HOW TO PLAY</div>
+            <div style="font-size:14px; line-height:1.8; color:rgba(255,255,255,0.6); text-align:left;">
+                <strong>PC:</strong> ← → Arrow keys to move SU-57<br>
+                <strong>Mobile:</strong> Slide finger anywhere on screen<br>
+                Dodge falling obstacles<br>
+                Collect 💰 coins to earn PMT<br>
+                Reach 1000 PMT to withdraw!
+            </div>
+        </div>
+    </div>
+
+    <div id="authScreen" class="screen hidden">
+        <div class="game-logo" style="font-size:clamp(1.5rem,6vw,2.5rem);">NEON RUSH 2077</div>
+        <div class="form-wrap">
+            <div class="tabs">
+                <div class="tab active" id="registerTab">REGISTER</div>
+                <div class="tab" id="loginTab">LOGIN</div>
+            </div>
+            <div id="registerForm">
+                <div class="form-group"><label>Username</label><input type="text" id="regUsername" placeholder="Choose a username" maxlength="20"></div>
+                <div class="form-group"><label>Email</label><input type="email" id="regEmail" placeholder="your@email.com"></div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <div style="position:relative;">
+                        <input type="password" id="regPassword" placeholder="Min. 6 characters" style="padding-right:48px;">
+                        <span onclick="togglePassword('regPassword', this)" style="position:absolute; right:14px; top:50%; transform:translateY(-50%); cursor:pointer; font-size:18px; user-select:none;">👁️</span>
+                    </div>
+                </div>
+                <p class="wallet-note">💡 Add your BNB wallet later when you want to withdraw</p>
+                <button class="btn" id="registerBtn" style="width:100%;">CREATE ACCOUNT</button>
+            </div>
+            <div id="loginForm" style="display:none;">
+                <div class="form-group"><label>Username</label><input type="text" id="loginUsername" placeholder="Your username"></div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <div style="position:relative;">
+                        <input type="password" id="loginPassword" placeholder="Your password" style="padding-right:48px;">
+                        <span onclick="togglePassword('loginPassword', this)" style="position:absolute; right:14px; top:50%; transform:translateY(-50%); cursor:pointer; font-size:18px; user-select:none;">👁️</span>
+                    </div>
+                </div>
+                <button class="btn" id="loginBtn" style="width:100%;">LOGIN</button>
+            </div>
+        </div>
+        <button class="btn btn-secondary" id="backToStartBtn">← BACK</button>
+    </div>
+
+    <div id="mainMenu" class="screen hidden">
+        <div style="font-family:'Orbitron',monospace; font-size:clamp(1rem,4vw,1.4rem); color:var(--cyan);">WELCOME, <span id="userDisplayName" style="color:white;"></span></div>
+        <div class="ad-slot">📢 AD SPACE — Google AdSense</div>
+        <div class="card">
+            <div class="card-title">👤 PLAYER PROFILE</div>
+            <div class="stat-row"><span class="stat-label">Username</span><span class="stat-value" id="menuUsername">—</span></div>
+            <div class="stat-row"><span class="stat-label">Email</span><span class="stat-value" id="menuEmail">—</span></div>
+            <div class="stat-row"><span class="stat-label">Wallet</span><span class="stat-value" id="menuWallet">Not set</span></div>
+            <div class="stat-row"><span class="stat-label">Balance</span><span class="stat-value" style="color:var(--yellow);">⬡ <span id="menuBalance">0</span> PMT</span></div>
+            <div class="stat-row"><span class="stat-label">High Score</span><span class="stat-value">🏆 <span id="menuHighScore">0</span></span></div>
+            <div class="stat-row"><span class="stat-label">Total Earned</span><span class="stat-value">📈 <span id="menuTotalEarned">0</span> PMT</span></div>
+            <div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div><div class="progress-label">Withdrawal: <span id="progressText">0 / 1000 PMT (0%)</span></div></div>
+        </div>
+        <div class="withdrawal-card">
+            <div class="card-title" style="color:#ff6b6b;">🚀 WITHDRAWAL INFO</div>
+            <div class="notice-grid"><div class="notice-item"><strong>Min. Amount</strong>1000 PMT</div><div class="notice-item"><strong>Network</strong>BNB Chain</div><div class="notice-item"><strong>Gas Fees</strong>BNB required</div><div class="notice-item"><strong>Token</strong>PMT</div></div>
+        </div>
+        <button class="btn btn-pulse" id="playBtn">🚀 START ASCENT</button>
+        <button class="btn btn-gold" id="withdrawBtn">💰 WITHDRAW PMT</button>
+        <button class="btn btn-secondary" id="walletBtn">👛 SET WALLET</button>
+        <button class="btn btn-secondary" id="logoutBtn">⏻ LOGOUT</button>
+    </div>
+
+    <div id="gameOver" class="screen hidden">
+        <div class="crash-title">CRASH!</div>
+        <p style="color:rgba(255,255,255,0.4); letter-spacing:3px;">SU-57 SHOT DOWN</p>
+        <div class="ad-slot">📢 AD SPACE — Google AdSense</div>
+        <div class="result-grid">
+            <div class="result-box"><div class="result-label">Height</div><div class="result-value"><span id="finalHeight">0</span>m</div></div>
+            <div class="result-box"><div class="result-label">Score</div><div class="result-value"><span id="finalScore">0</span></div></div>
+            <div class="result-box"><div class="result-label">Earned</div><div class="result-value pmt">+<span id="earned">0</span> PMT</div></div>
+        </div>
+        <button class="btn btn-pulse" id="restartBtn">🔄 CLIMB AGAIN</button>
+        <button class="btn btn-secondary" id="menuBtn">☰ MAIN MENU</button>
+    </div>
+</div>
+
+<div id="installBanner" style="display:none;">
+    <p>📱 INSTALL NEON RUSH 2077</p>
+    <div><button class="install-yes" id="installYes">INSTALL</button><button class="install-no" id="installNo">NOT NOW</button></div>
+</div>
+
+<script>
+// =====================================================
+// NEON RUSH 2077 — SU-57 Fighter Jet Edition
+// PC: Arrow keys to move | Android: Touch anywhere
+// =====================================================
+
+// Password toggle function
+function togglePassword(inputId, icon) {
+    const input = document.getElementById(inputId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.textContent = '🙈';
+    } else {
+        input.type = 'password';
+        icon.textContent = '👁️';
+    }
+}
+
+class NeonRush2077 {
+    constructor() {
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.keys = { left: false, right: false };
+        this.state = {
+            loggedIn: false,
+            currentUser: null,
+            users: JSON.parse(localStorage.getItem('neonRushUsers')) || {},
+            balance: 0,
+            level: 1,
+            score: 0,
+            lives: 3,
+            gameRunning: false,
+            scrollSpeed: 4,
+            player: { x: 400, y: 500, width: 55, height: 35, vx: 0 },
+            obstacles: [],
+            coins: [],
+            particles: [],
+            lastObstacleTime: 0,
+            lastCoinTime: 0,
+            totalHeight: 0,
+            cameraY: 0
+        };
+        this.setupCanvas();
+        this.setupEventListeners();
+        this.setupTouchControls();
+        this.setupKeyboardControls();
+        this.gameLoop();
+        this.setupPWAInstall();
+    }
+
+    setupCanvas() {
+        const resize = () => {
+            this.canvas.width = window.innerWidth;
+            this.canvas.height = window.innerHeight;
+            if (this.state.player) {
+                this.state.player.x = Math.min(this.state.player.x, this.canvas.width - 45);
+                this.state.player.y = this.canvas.height - 180;
+            }
+        };
+        resize();
+        window.addEventListener('resize', resize);
+        window.addEventListener('orientationchange', () => setTimeout(resize, 50));
+    }
+
+    setupEventListeners() {
+        document.getElementById('startBtn').onclick = () => this.showScreen('authScreen');
+        document.getElementById('backToStartBtn').onclick = () => this.showScreen('splashScreen');
+        document.getElementById('registerTab').onclick = () => this.switchTab('register');
+        document.getElementById('loginTab').onclick = () => this.switchTab('login');
+        document.getElementById('registerBtn').onclick = () => this.register();
+        document.getElementById('loginBtn').onclick = () => this.login();
+        document.getElementById('playBtn').onclick = () => this.startGame();
+        document.getElementById('restartBtn').onclick = () => this.startGame();
+        document.getElementById('menuBtn').onclick = () => { this.stopGame(); this.showScreen('mainMenu'); };
+        document.getElementById('withdrawBtn').onclick = () => this.withdraw();
+        document.getElementById('walletBtn').onclick = () => this.setWallet();
+        document.getElementById('logoutBtn').onclick = () => this.logout();
+    }
+
+    setupKeyboardControls() {
+        // PC Arrow Key controls
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                this.keys.left = true;
+                e.preventDefault();
+            }
+            if (e.key === 'ArrowRight') {
+                this.keys.right = true;
+                e.preventDefault();
+            }
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft') {
+                this.keys.left = false;
+                e.preventDefault();
+            }
+            if (e.key === 'ArrowRight') {
+                this.keys.right = false;
+                e.preventDefault();
+            }
+        });
+    }
+
+    setupTouchControls() {
+        const moveShip = (clientX) => {
+            if (!this.state.gameRunning) return;
+            const rect = this.canvas.getBoundingClientRect();
+            let touchX = clientX - rect.left;
+            touchX = Math.max(0, Math.min(rect.width, touchX));
+            const scaleX = this.canvas.width / rect.width;
+            touchX = touchX * scaleX;
+            const minX = 45;
+            const maxX = this.canvas.width - 45;
+            this.state.player.x = Math.min(maxX, Math.max(minX, touchX));
+        };
+        
+        window.addEventListener('touchstart', (e) => { e.preventDefault(); if(e.touches[0]) moveShip(e.touches[0].clientX); }, { passive: false });
+        window.addEventListener('touchmove', (e) => { e.preventDefault(); if(e.touches[0]) moveShip(e.touches[0].clientX); }, { passive: false });
+        this.canvas.addEventListener('mousemove', (e) => { if(this.state.gameRunning && e.buttons === 1) moveShip(e.clientX); });
+        this.canvas.addEventListener('mousedown', (e) => moveShip(e.clientX));
+    }
+
+    setupPWAInstall() {
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installBanner').style.display = 'flex';
+        });
+        document.getElementById('installYes').onclick = async () => {
+            if(deferredPrompt) { deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; }
+            document.getElementById('installBanner').style.display = 'none';
+        };
+        document.getElementById('installNo').onclick = () => document.getElementById('installBanner').style.display = 'none';
+    }
+
+    switchTab(tab) {
+        document.getElementById('registerTab').classList.toggle('active', tab === 'register');
+        document.getElementById('loginTab').classList.toggle('active', tab === 'login');
+        document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+        document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+    }
+
+    register() {
+        const username = document.getElementById('regUsername').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        const password = document.getElementById('regPassword').value;
+        if(!username || !email || !password) { alert('Please fill all fields!'); return; }
+        if(username.length < 3) { alert('Username must be at least 3 characters!'); return; }
+        if(password.length < 6) { alert('Password must be at least 6 characters!'); return; }
+        if(this.state.users[username]) { alert('Username already taken!'); return; }
+        this.state.users[username] = { username, email, password, wallet: null, balance: 5.0, highScore: 0, totalEarned: 0, joinedDate: new Date().toISOString() };
+        localStorage.setItem('neonRushUsers', JSON.stringify(this.state.users));
+        this.loginUser(username);
+    }
+
+    login() {
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        if(!username || !password) { alert('Please enter username and password!'); return; }
+        const user = this.state.users[username];
+        if(!user || user.password !== password) { alert('Invalid username or password!'); return; }
+        this.loginUser(username);
+    }
+
+    loginUser(username) {
+        this.state.currentUser = this.state.users[username];
+        this.state.loggedIn = true;
+        this.state.balance = this.state.currentUser.balance;
+        this.updateUserDisplay();
+        this.showScreen('mainMenu');
+    }
+
+    logout() {
+        this.state.loggedIn = false;
+        this.state.currentUser = null;
+        this.state.balance = 0;
+        this.showScreen('splashScreen');
+        document.getElementById('loginUsername').value = '';
+        document.getElementById('loginPassword').value = '';
+    }
+
+    setWallet() {
+        if(!this.state.currentUser) { alert('Please login first!'); return; }
+        const wallet = prompt('Enter your BNB Chain wallet address (0x...):');
+        if(!wallet) return;
+        if(!wallet.match(/^0x[a-fA-F0-9]{40}$/)) { alert('Invalid BNB Chain address!'); return; }
+        this.state.currentUser.wallet = wallet;
+        this.saveUserProgress();
+        this.updateUserDisplay();
+        alert('Wallet saved! Minimum withdrawal: 1000 PMT');
+    }
+
+    updateUserDisplay() {
+        if(!this.state.currentUser) return;
+        const u = this.state.currentUser;
+        document.getElementById('userDisplayName').innerText = u.username.toUpperCase();
+        document.getElementById('menuUsername').innerText = u.username;
+        document.getElementById('menuEmail').innerText = u.email;
+        document.getElementById('menuWallet').innerText = u.wallet ? u.wallet.slice(0,8)+'...'+u.wallet.slice(-6) : 'Not set';
+        document.getElementById('menuBalance').innerText = u.balance.toFixed(3);
+        document.getElementById('menuHighScore').innerText = u.highScore;
+        document.getElementById('menuTotalEarned').innerText = u.totalEarned.toFixed(3);
+        const pct = Math.min((u.balance / 1000) * 100, 100);
+        document.getElementById('progressFill').style.width = pct + '%';
+        document.getElementById('progressText').innerText = u.balance.toFixed(3) + ' / 1000 PMT (' + pct.toFixed(1) + '%)';
+    }
+
+    saveUserProgress() {
+        if(!this.state.currentUser) return;
+        this.state.currentUser.balance = this.state.balance;
+        if(this.state.score > this.state.currentUser.highScore) this.state.currentUser.highScore = this.state.score;
+        this.state.users[this.state.currentUser.username] = this.state.currentUser;
+        localStorage.setItem('neonRushUsers', JSON.stringify(this.state.users));
+    }
+
+    startGame() {
+        this.state.gameRunning = true;
+        this.state.score = 0;
+        this.state.lives = 3;
+        this.state.level = 1;
+        this.state.scrollSpeed = 4;
+        this.state.obstacles = [];
+        this.state.coins = [];
+        this.state.particles = [];
+        this.state.totalHeight = 0;
+        this.state.cameraY = 0;
+        this.state.player = { x: this.canvas.width/2, y: this.canvas.height-180, width: 55, height: 35, vx: 0 };
+        document.getElementById('hud').style.display = 'flex';
+        this.showScreen(null);
+        this.updateHUD();
+    }
+
+    stopGame() {
+        this.state.gameRunning = false;
+        document.getElementById('hud').style.display = 'none';
+    }
+
+    withdraw() {
+        if(!this.state.currentUser) { alert('Please login first!'); return; }
+        if(!this.state.currentUser.wallet) { alert('No wallet set! Use SET WALLET first.'); return; }
+        if(this.state.balance < 1000) { alert(`Need 1000 PMT! You have: ${this.state.balance.toFixed(3)} PMT`); return; }
+        alert('Withdrawal demo: ' + this.state.balance.toFixed(3) + ' PMT would be sent to ' + this.state.currentUser.wallet.slice(0,10)+'...');
+        this.state.balance = 0;
+        this.state.currentUser.balance = 0;
+        this.saveUserProgress();
+        this.updateUserDisplay();
+        if(typeof confetti === 'function') confetti({ particleCount: 200, spread: 120 });
+    }
+
+    showScreen(name) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+        if(name) document.getElementById(name).classList.remove('hidden');
+        if(name === 'mainMenu') this.updateUserDisplay();
+    }
+
+    updateHUD() {
+        document.getElementById('hLevel').innerText = this.state.level;
+        document.getElementById('hScore').innerText = this.state.score;
+        document.getElementById('hPmt').innerText = this.state.balance.toFixed(3);
+        document.getElementById('hLives').innerText = this.state.lives;
+        document.getElementById('hHeight').innerText = Math.floor(this.state.totalHeight/10);
+    }
+
+    gameLoop() {
+        if(this.state.gameRunning) { this.update(); this.render(); }
+        requestAnimationFrame(() => this.gameLoop());
+    }
+
+    update() {
+        const s = this.state;
+        
+        // PC Keyboard movement
+        let moveSpeed = 8;
+        if (this.keys.left) s.player.x -= moveSpeed;
+        if (this.keys.right) s.player.x += moveSpeed;
+        
+        s.player.x = Math.max(45, Math.min(this.canvas.width-45, s.player.x));
+        s.cameraY -= s.scrollSpeed;
+        s.totalHeight += s.scrollSpeed;
+        const now = Date.now();
+        if(now - s.lastObstacleTime > 1200 - (s.level*60)) { this.createObstacle(); s.lastObstacleTime = now; }
+        if(now - s.lastCoinTime > 800) { this.createCoin(); s.lastCoinTime = now; }
+        
+        for(let i=s.obstacles.length-1; i>=0; i--) {
+            const o = s.obstacles[i];
+            o.y += s.scrollSpeed+3;
+            if(o.y - s.cameraY > this.canvas.height+100) { s.obstacles.splice(i,1); continue; }
+            const sy = o.y - s.cameraY;
+            const pL = s.player.x - s.player.width/2, pR = s.player.x + s.player.width/2;
+            const pT = s.player.y, pB = s.player.y + s.player.height;
+            if(pR > o.x-o.width/2 && pL < o.x+o.width/2 && pB > sy && pT < sy+o.height) {
+                s.lives--;
+                this.createExplosion(o.x, sy);
+                s.obstacles.splice(i,1);
+                this.updateHUD();
+                if(s.lives <= 0) this.gameOver();
+            }
+        }
+        
+        for(let i=s.coins.length-1; i>=0; i--) {
+            const c = s.coins[i];
+            c.y += s.scrollSpeed;
+            if(c.y - s.cameraY > this.canvas.height+50) { s.coins.splice(i,1); continue; }
+            const sy = c.y - s.cameraY;
+            const dx = s.player.x - c.x, dy = (s.player.y + s.player.height/2) - sy;
+            if(Math.sqrt(dx*dx+dy*dy) < 30) {
+                s.score += 100;
+                s.balance += 0.1;
+                this.createParticles(c.x, sy, '#ffdd00');
+                s.coins.splice(i,1);
+                this.updateHUD();
+                if(s.score % 500 === 0) { s.level++; s.scrollSpeed += 0.7; this.createParticles(this.canvas.width/2,300,'#00ffff'); }
+            }
+        }
+        
+        for(let i=s.particles.length-1; i>=0; i--) {
+            const p = s.particles[i];
+            p.x += p.vx; p.y += p.vy;
+            p.alpha -= 0.03; p.size -= 0.15;
+            if(p.alpha <= 0 || p.size <= 0) s.particles.splice(i,1);
+        }
+        s.score += 1;
+        if(s.score % 100 === 0) this.updateHUD();
+    }
+
+    render() {
+        const ctx = this.ctx, s = this.state, W = this.canvas.width, H = this.canvas.height;
+        const bg = ctx.createLinearGradient(0,0,0,H);
+        bg.addColorStop(0,'#000814'); bg.addColorStop(1,'#050510');
+        ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+        
+        ctx.fillStyle = '#ffffff';
+        for(let i=0;i<100;i++) {
+            const x = ((i*137+50)%W);
+            const y = ((Math.sin(i)*1000 - s.cameraY*0.2)%H+H)%H;
+            ctx.globalAlpha = 0.4+(i%5)*0.12;
+            ctx.fillRect(x,y,(i%3)*0.5+0.5,(i%3)*0.5+0.5);
+        }
+        ctx.globalAlpha = 1;
+        
+        const px = s.player.x, py = s.player.y;
+        ctx.save();
+        ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 15;
+        ctx.fillStyle = '#3a3a4a';
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(px-12, py+12);
+        ctx.lineTo(px-22, py+28);
+        ctx.lineTo(px-32, py+32);
+        ctx.lineTo(px-18, py+34);
+        ctx.lineTo(px, py+38);
+        ctx.lineTo(px+18, py+34);
+        ctx.lineTo(px+32, py+32);
+        ctx.lineTo(px+22, py+28);
+        ctx.lineTo(px+12, py+12);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#00ccff';
+        ctx.beginPath();
+        ctx.ellipse(px, py+6, 6, 8, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(px-8, py+18); ctx.lineTo(px-28, py+30); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(px+8, py+18); ctx.lineTo(px+28, py+30); ctx.stroke();
+        ctx.fillStyle = '#ff4400'; ctx.shadowColor = '#ff6600';
+        ctx.beginPath(); ctx.moveTo(px-6, py+38); ctx.lineTo(px, py+42+Math.random()*4); ctx.lineTo(px+6, py+38); ctx.fill();
+        ctx.fillStyle = '#ffaa00';
+        ctx.beginPath(); ctx.moveTo(px-4, py+38); ctx.lineTo(px, py+40+Math.random()*3); ctx.lineTo(px+4, py+38); ctx.fill();
+        ctx.restore();
+        
+        s.obstacles.forEach(o => {
+            const sy = o.y - s.cameraY;
+            ctx.fillStyle = o.color; ctx.shadowBlur = 18;
+            ctx.fillRect(o.x-o.width/2, sy, o.width, o.height);
+            ctx.shadowBlur = 0;
+        });
+        s.coins.forEach(c => {
+            const sy = c.y - s.cameraY;
+            ctx.fillStyle = '#ffdd00'; ctx.shadowBlur = 22;
+            ctx.beginPath(); ctx.arc(c.x, sy, c.radius, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#000'; ctx.shadowBlur = 0; ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('$', c.x, sy);
+        });
+        s.particles.forEach(p => {
+            ctx.save(); ctx.globalAlpha = p.alpha; ctx.fillStyle = p.color; ctx.shadowBlur = 10;
+            ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); ctx.restore();
+        });
+    }
+
+    gameOver() {
+        this.state.gameRunning = false;
+        document.getElementById('hud').style.display = 'none';
+        const earned = (this.state.score * 0.0005).toFixed(3);
+        document.getElementById('finalScore').innerText = this.state.score;
+        document.getElementById('finalHeight').innerText = Math.floor(this.state.totalHeight/10);
+        document.getElementById('earned').innerText = earned;
+        if(this.state.currentUser) {
+            this.state.balance += parseFloat(earned);
+            this.state.currentUser.totalEarned += parseFloat(earned);
+            this.saveUserProgress();
+        }
+        this.showScreen('gameOver');
+    }
+
+    createObstacle() {
+        const types = [{width:70,height:25,color:'#ff0066'},{width:45,height:45,color:'#ff6600'},{width:90,height:20,color:'#ff00ff'},{width:35,height:60,color:'#00ff99'},{width:110,height:18,color:'#ff3300'}];
+        const t = types[Math.floor(Math.random()*types.length)];
+        this.state.obstacles.push({ x: Math.random()*(this.canvas.width-100)+50, y: this.state.cameraY-50, width: t.width, height: t.height, color: t.color });
+    }
+    createCoin() { this.state.coins.push({ x: Math.random()*(this.canvas.width-100)+50, y: this.state.cameraY-30, radius: 15 }); }
+    createParticles(x,y,color) { for(let i=0;i<12;i++) this.state.particles.push({ x,y, vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10, size:Math.random()*5+2, color, alpha:1 }); }
+    createExplosion(x,y) { for(let i=0;i<20;i++) this.state.particles.push({ x,y, vx:(Math.random()-0.5)*20, vy:(Math.random()-0.5)*20, size:Math.random()*8+3, color:'#ff0066', alpha:1 }); }
+}
+
+window.addEventListener('load', () => new NeonRush2077());
+</script>
+</body>
+</html>
