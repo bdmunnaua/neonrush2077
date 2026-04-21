@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#00ffff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -29,18 +29,12 @@
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
         }
 
         body {
             background: #050510;
             color: #e0f7ff;
             font-family: 'Rajdhani', sans-serif;
-            touch-action: none;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
         }
 
         #gameContainer {
@@ -56,10 +50,13 @@
             display: block;
             width: 100%;
             height: 100%;
-            touch-action: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
         }
 
-        /* Screens */
+        /* Screens - HIGHER Z-INDEX than canvas */
         .screen {
             position: fixed;
             top: 0;
@@ -77,6 +74,28 @@
             padding: 20px;
         }
         .hidden { display: none !important; }
+
+        /* HUD - above canvas but below screens */
+        #hud {
+            position: fixed;
+            top: 10px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 16px;
+            z-index: 50;
+            pointer-events: none;
+        }
+        .hud-stat {
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(0,255,255,0.3);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            color: #00ffff;
+        }
 
         .game-logo {
             font-family: 'Orbitron', monospace;
@@ -114,6 +133,13 @@
             text-transform: uppercase;
             letter-spacing: 2px;
             min-width: 220px;
+            transition: all 0.2s;
+            position: relative;
+            z-index: 101;
+        }
+        .btn:active {
+            transform: scale(0.98);
+            background: rgba(0,255,255,0.3);
         }
 
         .btn-secondary {
@@ -217,27 +243,6 @@
             color: #00ffff;
         }
 
-        #hud {
-            position: fixed;
-            top: 10px;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 16px;
-            z-index: 50;
-            pointer-events: none;
-        }
-        .hud-stat {
-            background: rgba(0,0,0,0.6);
-            border: 1px solid rgba(0,255,255,0.3);
-            border-radius: 6px;
-            padding: 6px 12px;
-            font-family: 'Orbitron', monospace;
-            font-size: 12px;
-            color: #00ffff;
-        }
-
         .crash-title {
             font-family: 'Orbitron', monospace;
             font-size: clamp(2rem, 8vw, 3.5rem);
@@ -293,10 +298,6 @@
             display: flex;
             justify-content: space-between;
             z-index: 1000;
-        }
-
-        .keyboard-hint {
-            display: none;
         }
     </style>
 </head>
@@ -365,7 +366,7 @@
 
     <!-- MAIN MENU -->
     <div id="mainMenu" class="screen hidden">
-        <div style="font-family:'Orbitron'; color:#00ffff;">WELCOME, <span id="userDisplayName" style="color:white;"></span></div>
+        <div style="font-family:'Orbitron'; color:#00ffff; margin-bottom:10px;">WELCOME, <span id="userDisplayName" style="color:white;"></span></div>
         <div class="ad-slot">📢 AD SPACE</div>
         <div class="card">
             <div class="card-title">👤 PLAYER PROFILE</div>
@@ -403,14 +404,13 @@
 
 <div id="installBanner" class="install-banner" style="display:none;">
     <p>📱 INSTALL NEON RUSH</p>
-    <div><button id="installYes" style="background:#00ffff; color:#000; padding:8px 16px; border:none;">INSTALL</button>
-    <button id="installNo" style="background:transparent; color:#fff; padding:8px 16px; border:1px solid #fff;">NOT NOW</button></div>
+    <div><button id="installYes" style="background:#00ffff; color:#000; padding:8px 16px; border:none; border-radius:4px;">INSTALL</button>
+    <button id="installNo" style="background:transparent; color:#fff; padding:8px 16px; border:1px solid #fff; border-radius:4px; margin-left:10px;">NOT NOW</button></div>
 </div>
 
 <script>
 // =====================================================
-// NEON RUSH 2077 — ANDROID OPTIMIZED
-// Touch anywhere, no buttons, ship higher, responsive
+// NEON RUSH 2077 — ANDROID FIXED (Buttons Working)
 // =====================================================
 
 function togglePassword(inputId, icon) {
@@ -428,7 +428,6 @@ class NeonRush2077 {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
-        this.keys = { left: false, right: false };
         
         this.state = {
             loggedIn: false,
@@ -440,7 +439,7 @@ class NeonRush2077 {
             lives: 3,
             gameRunning: false,
             scrollSpeed: 4,
-            player: { x: 400, y: 500, width: 55, height: 35, vx: 0 },
+            player: { x: 400, y: 500, width: 55, height: 35 },
             obstacles: [],
             coins: [],
             particles: [],
@@ -454,70 +453,110 @@ class NeonRush2077 {
     }
     
     init() {
-        this.resizeCanvas();
-        this.setupEvents();
+        this.resize();
+        this.setupButtons();
         this.setupTouch();
-        this.setupKeyboard();
-        this.setupPWA();
         this.gameLoop();
+        this.setupPWA();
+        
+        window.addEventListener('resize', () => this.resize());
+        window.addEventListener('orientationchange', () => setTimeout(() => this.resize(), 100));
+        
+        console.log('Game loaded — Android ready');
     }
     
-    resizeCanvas() {
+    resize() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
         if (this.state.player) {
-            this.state.player.x = Math.min(this.state.player.x, this.canvas.width - 45);
-            this.state.player.y = this.canvas.height - 230; // Higher up for Android
+            this.state.player.x = this.canvas.width / 2;
+            this.state.player.y = this.canvas.height - 200;
         }
     }
     
-    setupEvents() {
-        window.addEventListener('resize', () => this.resizeCanvas());
-        window.addEventListener('orientationchange', () => setTimeout(() => this.resizeCanvas(), 100));
+    setupButtons() {
+        // Splash to Auth
+        document.getElementById('startBtn').onclick = (e) => {
+            e.preventDefault();
+            console.log('Start button clicked');
+            this.showScreen('authScreen');
+        };
         
-        document.getElementById('startBtn').onclick = () => this.showScreen('authScreen');
-        document.getElementById('backToStartBtn').onclick = () => this.showScreen('splashScreen');
+        // Auth back
+        document.getElementById('backToStartBtn').onclick = (e) => {
+            e.preventDefault();
+            this.showScreen('splashScreen');
+        };
+        
+        // Tabs
         document.getElementById('registerTab').onclick = () => this.switchTab('register');
         document.getElementById('loginTab').onclick = () => this.switchTab('login');
-        document.getElementById('registerBtn').onclick = () => this.register();
-        document.getElementById('loginBtn').onclick = () => this.login();
-        document.getElementById('playBtn').onclick = () => this.startGame();
-        document.getElementById('restartBtn').onclick = () => this.startGame();
-        document.getElementById('menuBtn').onclick = () => { this.stopGame(); this.showScreen('mainMenu'); };
-        document.getElementById('withdrawBtn').onclick = () => this.withdraw();
-        document.getElementById('walletBtn').onclick = () => this.setWallet();
-        document.getElementById('logoutBtn').onclick = () => this.logout();
+        
+        // Register
+        document.getElementById('registerBtn').onclick = (e) => {
+            e.preventDefault();
+            this.register();
+        };
+        
+        // Login
+        document.getElementById('loginBtn').onclick = (e) => {
+            e.preventDefault();
+            this.login();
+        };
+        
+        // Main menu buttons
+        document.getElementById('playBtn').onclick = (e) => {
+            e.preventDefault();
+            this.startGame();
+        };
+        document.getElementById('restartBtn').onclick = (e) => {
+            e.preventDefault();
+            this.startGame();
+        };
+        document.getElementById('menuBtn').onclick = (e) => {
+            e.preventDefault();
+            this.stopGame();
+            this.showScreen('mainMenu');
+        };
+        document.getElementById('withdrawBtn').onclick = (e) => {
+            e.preventDefault();
+            this.withdraw();
+        };
+        document.getElementById('walletBtn').onclick = (e) => {
+            e.preventDefault();
+            this.setWallet();
+        };
+        document.getElementById('logoutBtn').onclick = (e) => {
+            e.preventDefault();
+            this.logout();
+        };
     }
     
     setupTouch() {
-        // Android touch — works anywhere on screen
-        const getTouchX = (clientX) => {
-            const rect = this.canvas.getBoundingClientRect();
-            let x = clientX - rect.left;
-            x = Math.max(0, Math.min(rect.width, x));
-            return (x / rect.width) * this.canvas.width;
-        };
-        
+        // Only enable touch movement when game is running
         const moveShip = (clientX) => {
             if (!this.state.gameRunning) return;
-            let x = getTouchX(clientX);
-            const minX = 45;
-            const maxX = this.canvas.width - 45;
-            this.state.player.x = Math.min(maxX, Math.max(minX, x));
+            const rect = this.canvas.getBoundingClientRect();
+            let x = clientX - rect.left;
+            x = Math.max(45, Math.min(this.canvas.width - 45, (x / rect.width) * this.canvas.width));
+            this.state.player.x = x;
         };
         
-        // Touch events on document to ensure capture
         document.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (e.touches[0]) moveShip(e.touches[0].clientX);
+            if (this.state.gameRunning) {
+                e.preventDefault();
+                if (e.touches[0]) moveShip(e.touches[0].clientX);
+            }
         }, { passive: false });
         
         document.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            if (e.touches[0]) moveShip(e.touches[0].clientX);
+            if (this.state.gameRunning) {
+                e.preventDefault();
+                if (e.touches[0]) moveShip(e.touches[0].clientX);
+            }
         }, { passive: false });
         
-        // Mouse for debugging
+        // Mouse for PC testing
         this.canvas.addEventListener('mousemove', (e) => {
             if (this.state.gameRunning && e.buttons === 1) {
                 const rect = this.canvas.getBoundingClientRect();
@@ -525,24 +564,6 @@ class NeonRush2077 {
                 x = Math.max(45, Math.min(this.canvas.width - 45, (x / rect.width) * this.canvas.width));
                 this.state.player.x = x;
             }
-        });
-        
-        this.canvas.addEventListener('mousedown', (e) => {
-            const rect = this.canvas.getBoundingClientRect();
-            let x = e.clientX - rect.left;
-            x = Math.max(45, Math.min(this.canvas.width - 45, (x / rect.width) * this.canvas.width));
-            this.state.player.x = x;
-        });
-    }
-    
-    setupKeyboard() {
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft') { this.keys.left = true; e.preventDefault(); }
-            if (e.key === 'ArrowRight') { this.keys.right = true; e.preventDefault(); }
-        });
-        window.addEventListener('keyup', (e) => {
-            if (e.key === 'ArrowLeft') { this.keys.left = false; e.preventDefault(); }
-            if (e.key === 'ArrowRight') { this.keys.right = false; e.preventDefault(); }
         });
     }
     
@@ -590,15 +611,33 @@ class NeonRush2077 {
         const email = document.getElementById('regEmail').value.trim();
         const password = document.getElementById('regPassword').value;
         
-        if (!username || !email || !password) { alert('Fill all fields!'); return; }
-        if (username.length < 3) { alert('Username min 3 chars'); return; }
-        if (password.length < 6) { alert('Password min 6 chars'); return; }
-        if (this.state.users[username]) { alert('Username taken!'); return; }
+        if (!username || !email || !password) {
+            alert('Please fill all fields!');
+            return;
+        }
+        if (username.length < 3) {
+            alert('Username must be at least 3 characters');
+            return;
+        }
+        if (password.length < 6) {
+            alert('Password must be at least 6 characters');
+            return;
+        }
+        if (this.state.users[username]) {
+            alert('Username already taken!');
+            return;
+        }
         
         this.state.users[username] = {
-            username, email, password, wallet: null,
-            balance: 5, highScore: 0, totalEarned: 0
+            username: username,
+            email: email,
+            password: password,
+            wallet: null,
+            balance: 5.0,
+            highScore: 0,
+            totalEarned: 0
         };
+        
         localStorage.setItem('neonRushUsers', JSON.stringify(this.state.users));
         this.loginUser(username);
     }
@@ -607,7 +646,12 @@ class NeonRush2077 {
         const username = document.getElementById('loginUsername').value.trim();
         const password = document.getElementById('loginPassword').value;
         const user = this.state.users[username];
-        if (!user || user.password !== password) { alert('Invalid credentials!'); return; }
+        
+        if (!user || user.password !== password) {
+            alert('Invalid username or password!');
+            return;
+        }
+        
         this.loginUser(username);
     }
     
@@ -616,34 +660,48 @@ class NeonRush2077 {
         this.state.balance = this.state.currentUser.balance;
         this.updateMenu();
         this.showScreen('mainMenu');
+        console.log('Logged in as:', username);
     }
     
     logout() {
         this.state.currentUser = null;
         this.state.balance = 0;
         this.showScreen('splashScreen');
+        document.getElementById('loginUsername').value = '';
+        document.getElementById('loginPassword').value = '';
     }
     
     setWallet() {
-        if (!this.state.currentUser) { alert('Login first!'); return; }
-        const wallet = prompt('Enter BNB Chain address (0x...):');
-        if (wallet && wallet.match(/^0x[a-fA-F0-9]{40}$/)) {
-            this.state.currentUser.wallet = wallet;
-            this.saveUser();
-            this.updateMenu();
-            alert('Wallet saved!');
-        } else if (wallet) { alert('Invalid address!'); }
+        if (!this.state.currentUser) {
+            alert('Please login first!');
+            return;
+        }
+        
+        const wallet = prompt('Enter your BNB Chain wallet address (0x...):');
+        if (!wallet) return;
+        
+        if (!wallet.match(/^0x[a-fA-F0-9]{40}$/)) {
+            alert('Invalid BNB Chain address! Must start with 0x and be 42 characters.');
+            return;
+        }
+        
+        this.state.currentUser.wallet = wallet;
+        this.saveUser();
+        this.updateMenu();
+        alert('Wallet saved successfully! Minimum withdrawal: 1000 PMT');
     }
     
     updateMenu() {
         if (!this.state.currentUser) return;
+        
         const u = this.state.currentUser;
         document.getElementById('userDisplayName').innerText = u.username.toUpperCase();
         document.getElementById('menuUsername').innerText = u.username;
         document.getElementById('menuEmail').innerText = u.email;
-        document.getElementById('menuWallet').innerText = u.wallet ? u.wallet.slice(0,8)+'...' : 'Not set';
+        document.getElementById('menuWallet').innerText = u.wallet ? u.wallet.slice(0, 8) + '...' + u.wallet.slice(-6) : 'Not set';
         document.getElementById('menuBalance').innerText = u.balance.toFixed(3);
         document.getElementById('menuHighScore').innerText = u.highScore;
+        
         const pct = Math.min((u.balance / 1000) * 100, 100);
         document.getElementById('progressFill').style.width = pct + '%';
         document.getElementById('progressText').innerText = u.balance.toFixed(3) + ' / 1000 PMT (' + pct.toFixed(0) + '%)';
@@ -661,6 +719,7 @@ class NeonRush2077 {
     }
     
     startGame() {
+        console.log('Starting game...');
         this.state.gameRunning = true;
         this.state.score = 0;
         this.state.lives = 3;
@@ -673,11 +732,11 @@ class NeonRush2077 {
         this.state.cameraY = 0;
         this.state.player = {
             x: this.canvas.width / 2,
-            y: this.canvas.height - 230,
+            y: this.canvas.height - 200,
             width: 55,
-            height: 35,
-            vx: 0
+            height: 35
         };
+        
         document.getElementById('hud').style.display = 'flex';
         this.showScreen(null);
         this.updateHUD();
@@ -689,21 +748,39 @@ class NeonRush2077 {
     }
     
     withdraw() {
-        if (!this.state.currentUser) { alert('Login first!'); return; }
-        if (!this.state.currentUser.wallet) { alert('Set wallet first!'); return; }
-        if (this.state.balance < 1000) { alert('Need 1000 PMT!'); return; }
-        alert('Withdrawal: ' + this.state.balance.toFixed(3) + ' PMT to ' + this.state.currentUser.wallet.slice(0,10)+'...');
+        if (!this.state.currentUser) {
+            alert('Please login first!');
+            return;
+        }
+        if (!this.state.currentUser.wallet) {
+            alert('Please set a wallet address first!');
+            return;
+        }
+        if (this.state.balance < 1000) {
+            alert('Minimum withdrawal is 1000 PMT!\nYou have: ' + this.state.balance.toFixed(3) + ' PMT');
+            return;
+        }
+        
+        alert('Withdrawal request submitted!\nAmount: ' + this.state.balance.toFixed(3) + ' PMT\nTo: ' + this.state.currentUser.wallet.slice(0, 10) + '...');
+        
         this.state.balance = 0;
         this.state.currentUser.balance = 0;
         this.saveUser();
         this.updateMenu();
-        if (typeof confetti === 'function') confetti();
+        
+        if (typeof confetti === 'function') {
+            confetti({ particleCount: 200, spread: 100 });
+        }
     }
     
     showScreen(name) {
         document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-        if (name) document.getElementById(name).classList.remove('hidden');
-        if (name === 'mainMenu') this.updateMenu();
+        if (name) {
+            document.getElementById(name).classList.remove('hidden');
+        }
+        if (name === 'mainMenu') {
+            this.updateMenu();
+        }
     }
     
     updateHUD() {
@@ -724,12 +801,6 @@ class NeonRush2077 {
     
     update() {
         const s = this.state;
-        
-        // Keyboard
-        let speed = 8;
-        if (this.keys.left) s.player.x -= speed;
-        if (this.keys.right) s.player.x += speed;
-        s.player.x = Math.max(45, Math.min(this.canvas.width - 45, s.player.x));
         
         s.cameraY -= s.scrollSpeed;
         s.totalHeight += s.scrollSpeed;
@@ -753,16 +824,19 @@ class NeonRush2077 {
                 continue;
             }
             const sy = o.y - s.cameraY;
-            const pL = s.player.x - s.player.width/2;
-            const pR = s.player.x + s.player.width/2;
+            const pL = s.player.x - s.player.width / 2;
+            const pR = s.player.x + s.player.width / 2;
             const pT = s.player.y;
             const pB = s.player.y + s.player.height;
-            if (pR > o.x - o.width/2 && pL < o.x + o.width/2 && pB > sy && pT < sy + o.height) {
+            
+            if (pR > o.x - o.width / 2 && pL < o.x + o.width / 2 && pB > sy && pT < sy + o.height) {
                 s.lives--;
                 this.createExplosion(o.x, sy);
                 s.obstacles.splice(i, 1);
                 this.updateHUD();
-                if (s.lives <= 0) this.gameOver();
+                if (s.lives <= 0) {
+                    this.gameOver();
+                }
             }
         }
         
@@ -776,16 +850,19 @@ class NeonRush2077 {
             }
             const sy = c.y - s.cameraY;
             const dx = s.player.x - c.x;
-            const dy = (s.player.y + s.player.height/2) - sy;
-            if (Math.sqrt(dx*dx + dy*dy) < 30) {
+            const dy = (s.player.y + s.player.height / 2) - sy;
+            
+            if (Math.sqrt(dx * dx + dy * dy) < 30) {
                 s.score += 100;
                 s.balance += 0.1;
                 this.createParticles(c.x, sy, '#ffdd00');
                 s.coins.splice(i, 1);
                 this.updateHUD();
+                
                 if (s.score % 500 === 0) {
                     s.level++;
                     s.scrollSpeed += 0.7;
+                    this.createParticles(this.canvas.width / 2, 300, '#00ffff');
                 }
             }
         }
@@ -797,11 +874,15 @@ class NeonRush2077 {
             p.y += p.vy;
             p.alpha -= 0.03;
             p.size -= 0.15;
-            if (p.alpha <= 0 || p.size <= 0) s.particles.splice(i, 1);
+            if (p.alpha <= 0 || p.size <= 0) {
+                s.particles.splice(i, 1);
+            }
         }
         
         s.score++;
-        if (s.score % 100 === 0) this.updateHUD();
+        if (s.score % 100 === 0) {
+            this.updateHUD();
+        }
     }
     
     render() {
@@ -818,12 +899,12 @@ class NeonRush2077 {
         ctx.fillRect(0, 0, W, H);
         
         // Stars
-        ctx.fillStyle = '#fff';
+        ctx.fillStyle = '#ffffff';
         for (let i = 0; i < 100; i++) {
             const x = ((i * 137 + 50) % W);
             const y = ((Math.sin(i) * 1000 - s.cameraY * 0.2) % H + H) % H;
             ctx.globalAlpha = 0.4 + (i % 5) * 0.12;
-            ctx.fillRect(x, y, 1, 1);
+            ctx.fillRect(x, y, 1.5, 1.5);
         }
         ctx.globalAlpha = 1;
         
@@ -891,7 +972,7 @@ class NeonRush2077 {
         s.obstacles.forEach(o => {
             const sy = o.y - s.cameraY;
             ctx.fillStyle = o.color;
-            ctx.fillRect(o.x - o.width/2, sy, o.width, o.height);
+            ctx.fillRect(o.x - o.width / 2, sy, o.width, o.height);
         });
         
         // Coins
@@ -945,7 +1026,8 @@ class NeonRush2077 {
             { width: 70, height: 25, color: '#ff0066' },
             { width: 45, height: 45, color: '#ff6600' },
             { width: 90, height: 20, color: '#ff00ff' },
-            { width: 35, height: 60, color: '#00ff99' }
+            { width: 35, height: 60, color: '#00ff99' },
+            { width: 110, height: 18, color: '#ff3300' }
         ];
         const t = types[Math.floor(Math.random() * types.length)];
         this.state.obstacles.push({
@@ -968,7 +1050,8 @@ class NeonRush2077 {
     createParticles(x, y, color) {
         for (let i = 0; i < 12; i++) {
             this.state.particles.push({
-                x, y,
+                x: x,
+                y: y,
                 vx: (Math.random() - 0.5) * 10,
                 vy: (Math.random() - 0.5) * 10,
                 size: Math.random() * 5 + 2,
@@ -981,7 +1064,8 @@ class NeonRush2077 {
     createExplosion(x, y) {
         for (let i = 0; i < 20; i++) {
             this.state.particles.push({
-                x, y,
+                x: x,
+                y: y,
                 vx: (Math.random() - 0.5) * 20,
                 vy: (Math.random() - 0.5) * 20,
                 size: Math.random() * 8 + 3,
@@ -993,7 +1077,10 @@ class NeonRush2077 {
 }
 
 // Start the game
-window.addEventListener('load', () => new NeonRush2077());
+window.addEventListener('load', () => {
+    console.log('Page loaded, starting game...');
+    new NeonRush2077();
+});
 </script>
 </body>
 </html>
