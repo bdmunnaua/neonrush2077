@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#00ffff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -11,9 +11,14 @@
     <link rel="manifest" href="manifest.json">
     <title>NEON RUSH 2077 | SU-57 Fighter | Earn PMT Crypto</title>
 
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+    <!-- ===================== GOOGLE ADSENSE ===================== -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1945002311764956" crossorigin="anonymous"></script>
+    <!-- ============================================================ -->
 
     <style>
         :root {
@@ -28,20 +33,29 @@
             --text: #e0f7ff;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
 
         body {
-            background: var(--dark);
+            background: #050510;
             color: var(--text);
             font-family: 'Rajdhani', sans-serif;
-            /* FIX 1: Removed touch-action:none from body — it blocks button taps on mobile.
-               touch-action is now only applied to the canvas via JS during gameplay. */
+            overflow: hidden;
+            touch-action: none;
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
-            overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
         }
 
+        /* ---- SCANLINE OVERLAY ---- */
         body::before {
             content: '';
             position: fixed;
@@ -58,28 +72,28 @@
         }
 
         #gameContainer {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            background: #050510;
-            /* FIX 2: Remove tap highlight interference */
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        /* FIX 3: Use a JS-set height instead of calc(100vh - 1cm) for mobile browser compat */
-        canvas {
-            display: block;
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            /* touch-action set dynamically via JS */
+            background: #050510;
         }
 
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+
+        /* ===== SCREENS ===== */
         .screen {
-            position: absolute;
-            inset: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background: linear-gradient(160deg, #050510 0%, #0a0a20 60%, #050518 100%);
             display: flex;
             flex-direction: column;
@@ -89,8 +103,6 @@
             text-align: center;
             overflow-y: auto;
             padding: 20px;
-            /* FIX 4: Screens need touch-action auto so buttons respond */
-            touch-action: auto;
         }
 
         .screen::before {
@@ -105,6 +117,7 @@
 
         .hidden { display: none !important; }
 
+        /* ===== LOGO ===== */
         .game-logo {
             font-family: 'Orbitron', monospace;
             font-weight: 900;
@@ -132,6 +145,7 @@
             opacity: 0.8;
         }
 
+        /* ===== BUTTONS ===== */
         .btn {
             background: linear-gradient(135deg, rgba(0,255,255,0.15), rgba(0,128,255,0.15));
             color: var(--cyan);
@@ -150,9 +164,6 @@
             min-width: 220px;
             position: relative;
             overflow: hidden;
-            /* FIX 5: Ensure buttons always receive taps */
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: rgba(0,255,255,0.2);
         }
 
         .btn::before {
@@ -166,7 +177,7 @@
 
         .btn:hover::before { left: 100%; }
 
-        .btn:hover, .btn:active {
+        .btn:hover {
             background: linear-gradient(135deg, rgba(0,255,255,0.25), rgba(0,128,255,0.25));
             box-shadow: 0 0 30px rgba(0,255,255,0.5), inset 0 0 20px rgba(0,255,255,0.1);
             transform: translateY(-2px);
@@ -181,7 +192,7 @@
             box-shadow: none;
         }
 
-        .btn-secondary:hover, .btn-secondary:active {
+        .btn-secondary:hover {
             color: #ddd;
             border-color: #888;
             box-shadow: 0 0 15px rgba(255,255,255,0.1);
@@ -194,10 +205,11 @@
             box-shadow: 0 0 15px rgba(255,221,0,0.2);
         }
 
-        .btn-gold:hover, .btn-gold:active {
+        .btn-gold:hover {
             box-shadow: 0 0 30px rgba(255,221,0,0.5);
         }
 
+        /* ===== CARDS ===== */
         .card {
             background: var(--card);
             border: 1px solid var(--border);
@@ -221,6 +233,7 @@
             gap: 8px;
         }
 
+        /* ===== STAT ROWS ===== */
         .stat-row {
             display: flex;
             justify-content: space-between;
@@ -234,7 +247,10 @@
         .stat-label { color: rgba(255,255,255,0.5); }
         .stat-value { color: var(--cyan); font-weight: 700; font-family: 'Orbitron', monospace; font-size: 13px; }
 
-        .progress-wrap { margin: 10px 0 4px; }
+        /* ===== PROGRESS BAR ===== */
+        .progress-wrap {
+            margin: 10px 0 4px;
+        }
 
         .progress-bar {
             background: rgba(0,255,255,0.1);
@@ -259,6 +275,7 @@
             text-align: right;
         }
 
+        /* ===== WITHDRAWAL NOTICE ===== */
         .withdrawal-card {
             background: linear-gradient(135deg, rgba(255,107,107,0.12), rgba(238,90,36,0.12));
             border: 1px solid rgba(255,107,107,0.4);
@@ -269,7 +286,9 @@
             width: 100%;
         }
 
-        .withdrawal-card .card-title { color: #ff6b6b; }
+        .withdrawal-card .card-title {
+            color: #ff6b6b;
+        }
 
         .notice-grid {
             display: grid;
@@ -277,7 +296,10 @@
             gap: 8px;
         }
 
-        .notice-item { font-size: 13px; color: rgba(255,255,255,0.7); }
+        .notice-item {
+            font-size: 13px;
+            color: rgba(255,255,255,0.7);
+        }
 
         .notice-item strong {
             color: var(--yellow);
@@ -288,6 +310,7 @@
             margin-bottom: 2px;
         }
 
+        /* ===== FORMS ===== */
         .form-wrap {
             background: var(--card);
             border: 1px solid var(--border);
@@ -323,8 +346,6 @@
             font-family: 'Rajdhani', sans-serif;
             font-size: 16px;
             transition: border-color 0.2s, box-shadow 0.2s;
-            /* FIX 6: Inputs need touch-action auto */
-            touch-action: auto;
         }
 
         .form-group input:focus {
@@ -333,7 +354,12 @@
             box-shadow: 0 0 12px rgba(0,255,255,0.25);
         }
 
-        .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+        /* ===== TABS ===== */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
 
         .tab {
             flex: 1;
@@ -348,7 +374,6 @@
             color: rgba(255,255,255,0.5);
             text-transform: uppercase;
             transition: all 0.2s;
-            touch-action: manipulation;
         }
 
         .tab.active {
@@ -359,14 +384,14 @@
 
         /* ===== IN-GAME HUD ===== */
         #hud {
-            position: absolute;
-            top: 0;
+            position: fixed;
+            top: 10px;
             left: 0;
             right: 0;
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            padding: 8px 10px;
+            padding: 12px 16px;
             z-index: 50;
             pointer-events: none;
         }
@@ -375,14 +400,24 @@
             background: rgba(0,0,0,0.6);
             border: 1px solid rgba(0,255,255,0.3);
             border-radius: 6px;
-            padding: 4px 8px;
+            padding: 6px 12px;
             font-family: 'Orbitron', monospace;
-            font-size: clamp(8px, 2vw, 12px);
+            font-size: clamp(9px, 2vw, 13px);
             color: var(--cyan);
             text-shadow: 0 0 8px var(--cyan);
             backdrop-filter: blur(4px);
         }
 
+        /* ===== ANDROID TOUCH FEEDBACK ===== */
+        canvas:active {
+            cursor: grabbing;
+        }
+        
+        #gameContainer {
+            -webkit-tap-highlight-color: rgba(0, 255, 255, 0.2);
+        }
+
+        /* ===== GAME OVER SCREEN ===== */
         .crash-title {
             font-family: 'Orbitron', monospace;
             font-weight: 900;
@@ -430,8 +465,11 @@
             color: var(--cyan);
         }
 
-        .result-value.pmt { color: var(--yellow); }
+        .result-value.pmt {
+            color: var(--yellow);
+        }
 
+        /* ===== AD SLOTS ===== */
         .ad-slot {
             background: rgba(255,255,255,0.03);
             border: 1px dashed rgba(255,255,255,0.1);
@@ -446,10 +484,12 @@
             width: 100%;
         }
 
+        /* ===== SCROLLBAR ===== */
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--cyan); border-radius: 2px; }
 
+        /* ===== INSTALL BANNER ===== */
         #installBanner {
             position: fixed;
             bottom: 0;
@@ -472,7 +512,10 @@
             letter-spacing: 1px;
         }
 
-        #installBanner .install-btns { display: flex; gap: 10px; }
+        #installBanner .install-btns {
+            display: flex;
+            gap: 10px;
+        }
 
         #installBanner button {
             padding: 8px 16px;
@@ -482,10 +525,12 @@
             font-family: 'Orbitron', monospace;
             font-size: 11px;
             letter-spacing: 1px;
-            touch-action: manipulation;
         }
 
-        #installBanner .install-yes { background: var(--cyan); color: #000; }
+        #installBanner .install-yes {
+            background: var(--cyan);
+            color: #000;
+        }
 
         #installBanner .install-no {
             background: transparent;
@@ -493,6 +538,7 @@
             border: 1px solid rgba(255,255,255,0.2) !important;
         }
 
+        /* ===== WALLET NOTE ===== */
         .wallet-note {
             color: rgba(255,221,0,0.7);
             font-size: 12px;
@@ -500,6 +546,7 @@
             font-style: italic;
         }
 
+        /* ===== PULSE ANIMATION ===== */
         @keyframes pulse {
             0%, 100% { box-shadow: 0 0 15px rgba(0,255,255,0.3); }
             50% { box-shadow: 0 0 30px rgba(0,255,255,0.7); }
@@ -507,27 +554,7 @@
 
         .btn-pulse { animation: pulse 2s infinite; }
 
-        /* FIX 7: Mobile touch hint overlay shown during gameplay */
-        #touchHint {
-            position: absolute;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,255,255,0.15);
-            border: 1px solid rgba(0,255,255,0.4);
-            border-radius: 20px;
-            padding: 8px 20px;
-            font-family: 'Orbitron', monospace;
-            font-size: 11px;
-            color: var(--cyan);
-            letter-spacing: 2px;
-            z-index: 60;
-            pointer-events: none;
-            opacity: 1;
-            transition: opacity 1s ease;
-            white-space: nowrap;
-        }
-
+        /* ===== RESPONSIVE ===== */
         @media (max-width: 480px) {
             .btn { min-width: 180px; padding: 12px 24px; }
             .form-wrap { padding: 20px; }
@@ -540,10 +567,7 @@
 <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
 
-    <!-- Touch hint (shown briefly when game starts) -->
-    <div id="touchHint" style="display:none;">👆 SLIDE FINGER TO STEER</div>
-
-    <!-- HUD -->
+    <!-- HUD (shown during gameplay) -->
     <div id="hud" style="display:none;">
         <div class="hud-stat">LVL <span id="hLevel">1</span></div>
         <div class="hud-stat">⬆ <span id="hHeight">0</span>m</div>
@@ -552,12 +576,15 @@
         <div class="hud-stat">♥ <span id="hLives">3</span></div>
     </div>
 
-    <!-- SPLASH -->
+    <!-- ===== SPLASH SCREEN ===== -->
     <div id="splashScreen" class="screen">
         <div class="game-logo">NEON RUSH<br>2077</div>
         <p class="tagline">SU-57 FELON · ASCEND · EARN PMT</p>
+
         <div class="ad-slot">📢 AD SPACE — Google AdSense Banner (728×90)</div>
+
         <button class="btn btn-pulse" id="startBtn">▶ PLAY TO EARN</button>
+
         <div class="card" style="max-width:380px; margin-top:16px;">
             <div class="card-title">🎮 HOW TO PLAY</div>
             <div style="font-size:14px; line-height:1.8; color:rgba(255,255,255,0.6); text-align:left;">
@@ -569,14 +596,16 @@
         </div>
     </div>
 
-    <!-- AUTH -->
+    <!-- ===== AUTH SCREEN ===== -->
     <div id="authScreen" class="screen hidden">
         <div class="game-logo" style="font-size:clamp(1.5rem,6vw,2.5rem);">NEON RUSH 2077</div>
+
         <div class="form-wrap">
             <div class="tabs">
                 <div class="tab active" id="registerTab">REGISTER</div>
                 <div class="tab" id="loginTab">LOGIN</div>
             </div>
+
             <div id="registerForm">
                 <div class="form-group">
                     <label>Username</label>
@@ -590,12 +619,13 @@
                     <label>Password</label>
                     <div style="position:relative;">
                         <input type="password" id="regPassword" placeholder="Min. 6 characters" style="padding-right:48px;">
-                        <span onclick="togglePassword('regPassword', this)" style="position:absolute; right:14px; top:50%; transform:translateY(-50%); cursor:pointer; font-size:18px; user-select:none; touch-action:manipulation;">👁️</span>
+                        <span onclick="togglePassword('regPassword', this)" style="position:absolute; right:14px; top:50%; transform:translateY(-50%); cursor:pointer; font-size:18px; user-select:none;">👁️</span>
                     </div>
                 </div>
                 <p class="wallet-note">💡 Add your BNB wallet later when you want to withdraw</p>
                 <button class="btn" id="registerBtn" style="width:100%; min-width:unset;">CREATE ACCOUNT</button>
             </div>
+
             <div id="loginForm" style="display:none;">
                 <div class="form-group">
                     <label>Username</label>
@@ -605,21 +635,24 @@
                     <label>Password</label>
                     <div style="position:relative;">
                         <input type="password" id="loginPassword" placeholder="Your password" style="padding-right:48px;">
-                        <span onclick="togglePassword('loginPassword', this)" style="position:absolute; right:14px; top:50%; transform:translateY(-50%); cursor:pointer; font-size:18px; user-select:none; touch-action:manipulation;">👁️</span>
+                        <span onclick="togglePassword('loginPassword', this)" style="position:absolute; right:14px; top:50%; transform:translateY(-50%); cursor:pointer; font-size:18px; user-select:none;">👁️</span>
                     </div>
                 </div>
                 <button class="btn" id="loginBtn" style="width:100%; min-width:unset;">LOGIN</button>
             </div>
         </div>
+
         <button class="btn btn-secondary" id="backToStartBtn">← BACK</button>
     </div>
 
-    <!-- MAIN MENU -->
+    <!-- ===== MAIN MENU ===== -->
     <div id="mainMenu" class="screen hidden">
         <div style="font-family:'Orbitron',monospace; font-size:clamp(1rem,4vw,1.4rem); color:var(--cyan); margin-bottom:4px;">
             WELCOME BACK, <span id="userDisplayName" style="color:white;"></span>
         </div>
+
         <div class="ad-slot">📢 AD SPACE — Google AdSense Banner (320×50 Mobile)</div>
+
         <div class="card">
             <div class="card-title">👤 PLAYER PROFILE</div>
             <div class="stat-row">
@@ -646,6 +679,7 @@
                 <span class="stat-label">Total Earned</span>
                 <span class="stat-value">📈 <span id="menuTotalEarned">0</span> PMT</span>
             </div>
+
             <div class="progress-wrap" style="margin-top:12px;">
                 <div class="progress-bar">
                     <div class="progress-fill" id="progressFill" style="width:0%"></div>
@@ -653,6 +687,7 @@
                 <div class="progress-label">Withdrawal: <span id="progressText">0 / 1000 PMT (0%)</span></div>
             </div>
         </div>
+
         <div class="withdrawal-card">
             <div class="card-title" style="color:#ff6b6b;">🚀 WITHDRAWAL INFO</div>
             <div class="notice-grid">
@@ -662,17 +697,20 @@
                 <div class="notice-item"><strong>Token</strong>PMT</div>
             </div>
         </div>
+
         <button class="btn btn-pulse" id="playBtn">🚀 START ASCENT</button>
         <button class="btn btn-gold" id="withdrawBtn">💰 WITHDRAW PMT</button>
         <button class="btn btn-secondary" id="walletBtn">👛 SET WALLET</button>
         <button class="btn btn-secondary" id="logoutBtn">⏻ LOGOUT</button>
     </div>
 
-    <!-- GAME OVER -->
+    <!-- ===== GAME OVER ===== -->
     <div id="gameOver" class="screen hidden">
         <div class="crash-title">CRASH!</div>
         <p style="color:rgba(255,255,255,0.4); letter-spacing:3px; font-size:12px; margin-bottom:20px;">SU-57 SHOT DOWN</p>
+
         <div class="ad-slot">📢 AD SPACE — Google AdSense Interstitial / Rectangle (300×250)</div>
+
         <div class="result-grid">
             <div class="result-box">
                 <div class="result-label">Height</div>
@@ -687,6 +725,7 @@
                 <div class="result-value pmt">+<span id="earned">0</span><br><span style="font-size:10px;">PMT</span></div>
             </div>
         </div>
+
         <button class="btn btn-pulse" id="restartBtn">🔄 CLIMB AGAIN</button>
         <button class="btn btn-secondary" id="menuBtn">☰ MAIN MENU</button>
     </div>
@@ -703,12 +742,7 @@
 <script>
 // =====================================================
 //  NEON RUSH 2077 — SU-57 Fighter Jet Edition
-//  MOBILE FIXES:
-//  1. touch-action:none removed from body (blocked button taps)
-//  2. Touch listeners moved from window → canvas only during gameplay
-//  3. Canvas sized via JS (reliable cross-browser)
-//  4. Screens have touch-action:auto so all UI elements work
-//  5. touch-action:manipulation on all buttons (instant tap response)
+//  Android Fixed: Proper touch, full screen, no controls
 // =====================================================
 
 const BACKEND_URL = 'https://neonrush2077-production.up.railway.app';
@@ -717,7 +751,6 @@ class NeonRush2077 {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
-        this._touchBound = false; // FIX: track if canvas touch listeners are active
 
         this.state = {
             loggedIn: false,
@@ -742,93 +775,36 @@ class NeonRush2077 {
 
         this.setupCanvas();
         this.setupEventListeners();
+        this.setupTouchControls();
         this.gameLoop();
         this.setupPWAInstall();
-        console.log('🎮 NEON RUSH 2077 — Mobile Fixed | Touch Anywhere to Fly');
+        console.log('SU-57 Fighter | Android Ready | Touch anywhere to fly');
     }
 
     setupCanvas() {
-        // FIX: Resize canvas to actual pixel dimensions for crisp rendering
         const resize = () => {
             this.canvas.width = window.innerWidth;
             this.canvas.height = window.innerHeight;
             if (this.state.player) {
                 this.state.player.x = Math.min(this.state.player.x, this.canvas.width - 45);
-                this.state.player.y = this.canvas.height - 160;
+                this.state.player.y = this.canvas.height - 180;
             }
         };
         resize();
         window.addEventListener('resize', resize);
-    }
-
-    // FIX: Attach canvas touch listeners ONLY during gameplay
-    // This prevents touch events from blocking button taps on UI screens
-    attachTouchListeners() {
-        if (this._touchBound) return;
-        this._touchBound = true;
-
-        // Enable touch-action:none on canvas only during play (prevents scroll, enables fast touch)
-        this.canvas.style.touchAction = 'none';
-
-        const getX = (clientX) => {
-            const rect = this.canvas.getBoundingClientRect();
-            const scaleX = this.canvas.width / rect.width;
-            return Math.max(0, Math.min(rect.width, clientX - rect.left)) * scaleX;
-        };
-
-        this._onTouchStart = (e) => {
-            // Only preventDefault on canvas touches, not on UI elements
-            if (e.target === this.canvas) {
-                e.preventDefault();
-            }
-            if (!this.state.gameRunning) return;
-            const touchX = getX(e.touches[0].clientX);
-            this.state.player.x = Math.min(this.canvas.width - 45, Math.max(45, touchX));
-        };
-
-        this._onTouchMove = (e) => {
-            if (e.target === this.canvas) {
-                e.preventDefault();
-            }
-            if (!this.state.gameRunning) return;
-            const touchX = getX(e.touches[0].clientX);
-            this.state.player.x = Math.min(this.canvas.width - 45, Math.max(45, touchX));
-        };
-
-        // FIX: Attach to canvas only, NOT window — so UI touches aren't blocked
-        this.canvas.addEventListener('touchstart', this._onTouchStart, { passive: false });
-        this.canvas.addEventListener('touchmove', this._onTouchMove, { passive: false });
-        this.canvas.addEventListener('touchend', (e) => { if (e.target === this.canvas) e.preventDefault(); }, { passive: false });
-
-        // Mouse support
-        this.canvas.addEventListener('mousemove', (e) => {
-            if (!this.state.gameRunning || e.buttons !== 1) return;
-            const rect = this.canvas.getBoundingClientRect();
-            const scaleX = this.canvas.width / rect.width;
-            const mouseX = (e.clientX - rect.left) * scaleX;
-            this.state.player.x = Math.min(this.canvas.width - 45, Math.max(45, mouseX));
-        });
-        this.canvas.addEventListener('mousedown', (e) => {
-            if (!this.state.gameRunning) return;
-            const rect = this.canvas.getBoundingClientRect();
-            const scaleX = this.canvas.width / rect.width;
-            const mouseX = (e.clientX - rect.left) * scaleX;
-            this.state.player.x = Math.min(this.canvas.width - 45, Math.max(45, mouseX));
-        });
-    }
-
-    detachTouchListeners() {
-        // Re-enable normal touch behavior when on menus
-        this.canvas.style.touchAction = 'auto';
+        window.addEventListener('orientationchange', () => setTimeout(resize, 50));
     }
 
     setupEventListeners() {
         document.getElementById('startBtn').addEventListener('click', () => this.showScreen('authScreen'));
         document.getElementById('backToStartBtn').addEventListener('click', () => this.showScreen('splashScreen'));
+
         document.getElementById('registerTab').addEventListener('click', () => this.switchTab('register'));
         document.getElementById('loginTab').addEventListener('click', () => this.switchTab('login'));
+
         document.getElementById('registerBtn').addEventListener('click', () => this.register());
         document.getElementById('loginBtn').addEventListener('click', () => this.login());
+
         document.getElementById('playBtn').addEventListener('click', () => this.startGame());
         document.getElementById('restartBtn').addEventListener('click', () => this.startGame());
         document.getElementById('menuBtn').addEventListener('click', () => { this.stopGame(); this.showScreen('mainMenu'); });
@@ -841,24 +817,49 @@ class NeonRush2077 {
             if (!this.state.gameRunning) return;
             if (e.key === 'ArrowLeft') this.state.player.vx = -9;
             if (e.key === 'ArrowRight') this.state.player.vx = 9;
-            if (e.key === ' ') { e.preventDefault(); this.boost(); }
         });
         document.addEventListener('keyup', (e) => {
             this.state.keys[e.key] = false;
             if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') this.state.player.vx = 0;
         });
+    }
 
-        ['regPassword','loginPassword'].forEach(id => {
-            document.getElementById(id).addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    if (id === 'regPassword') this.register();
-                    else this.login();
-                }
-            });
+    setupTouchControls() {
+        const getTouchX = (clientX) => {
+            const rect = this.canvas.getBoundingClientRect();
+            let touchX = clientX - rect.left;
+            touchX = Math.max(0, Math.min(rect.width, touchX));
+            const scaleX = this.canvas.width / rect.width;
+            return touchX * scaleX;
+        };
+        
+        const moveShip = (clientX) => {
+            if (!this.state.gameRunning) return;
+            let touchX = getTouchX(clientX);
+            const minX = 45;
+            const maxX = this.canvas.width - 45;
+            this.state.player.x = Math.min(maxX, Math.max(minX, touchX));
+        };
+        
+        const handleTouch = (e) => {
+            e.preventDefault();
+            if (e.touches && e.touches[0]) {
+                moveShip(e.touches[0].clientX);
+            }
+        };
+        
+        window.addEventListener('touchstart', handleTouch, { passive: false });
+        window.addEventListener('touchmove', handleTouch, { passive: false });
+        
+        this.canvas.addEventListener('mousemove', (e) => {
+            if (!this.state.gameRunning) return;
+            if (e.buttons !== 1) return;
+            moveShip(e.clientX);
         });
-
-        // FIX: Attach canvas touch listeners once (they check gameRunning internally)
-        this.attachTouchListeners();
+        
+        this.canvas.addEventListener('mousedown', (e) => {
+            moveShip(e.clientX);
+        });
     }
 
     setupPWAInstall() {
@@ -868,14 +869,16 @@ class NeonRush2077 {
             deferredPrompt = e;
             document.getElementById('installBanner').style.display = 'flex';
         });
+
         document.getElementById('installYes').addEventListener('click', async () => {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
+                await deferredPrompt.userChoice;
                 deferredPrompt = null;
             }
             document.getElementById('installBanner').style.display = 'none';
         });
+
         document.getElementById('installNo').addEventListener('click', () => {
             document.getElementById('installBanner').style.display = 'none';
         });
@@ -892,16 +895,21 @@ class NeonRush2077 {
         const username = document.getElementById('regUsername').value.trim();
         const email = document.getElementById('regEmail').value.trim();
         const password = document.getElementById('regPassword').value;
+
         if (!username || !email || !password) { alert('Please fill all fields!'); return; }
         if (username.length < 3) { alert('Username must be at least 3 characters!'); return; }
         if (password.length < 6) { alert('Password must be at least 6 characters!'); return; }
         if (this.state.users[username]) { alert('Username already taken!'); return; }
+
         this.state.users[username] = {
             username, email, password,
-            wallet: null, balance: 5.0,
-            highScore: 0, totalEarned: 0,
+            wallet: null,
+            balance: 5.0,
+            highScore: 0,
+            totalEarned: 0,
             joinedDate: new Date().toISOString()
         };
+
         localStorage.setItem('neonRushUsers', JSON.stringify(this.state.users));
         this.loginUser(username);
     }
@@ -934,20 +942,16 @@ class NeonRush2077 {
 
     async setWallet() {
         if (!this.state.currentUser) { alert('Please login first!'); return; }
-        const wallet = prompt(
-            '🔗 ENTER YOUR BNB CHAIN WALLET ADDRESS (0x...)\n\n' +
-            '✅ Supported: Trust Wallet, MetaMask, Binance Wallet\n' +
-            '⚠️ Ensure network is BSC Mainnet\n\nEnter address:'
-        );
+        const wallet = prompt('Enter your BNB Chain wallet address (0x...):');
         if (!wallet) return;
         if (!wallet.match(/^0x[a-fA-F0-9]{40}$/)) {
-            alert('❌ Invalid BNB Chain address!\nMust start with 0x and be 42 characters.');
+            alert('Invalid BNB Chain address!');
             return;
         }
         this.state.currentUser.wallet = wallet;
         this.saveUserProgress();
         this.updateUserDisplay();
-        alert('✅ Wallet saved!\n\nWithdrawals will go to:\n' + wallet + '\n\n⚠️ Minimum: 1000 PMT');
+        alert('Wallet saved! Minimum withdrawal: 1000 PMT');
     }
 
     updateUserDisplay() {
@@ -962,10 +966,10 @@ class NeonRush2077 {
         document.getElementById('menuBalance').textContent = u.balance.toFixed(3);
         document.getElementById('menuHighScore').textContent = u.highScore;
         document.getElementById('menuTotalEarned').textContent = u.totalEarned.toFixed(3);
+
         const pct = Math.min((u.balance / 1000) * 100, 100);
         document.getElementById('progressFill').style.width = pct + '%';
-        document.getElementById('progressText').textContent =
-            u.balance.toFixed(3) + ' / 1000 PMT (' + pct.toFixed(1) + '%)';
+        document.getElementById('progressText').textContent = u.balance.toFixed(3) + ' / 1000 PMT (' + pct.toFixed(1) + '%)';
     }
 
     saveUserProgress() {
@@ -989,56 +993,41 @@ class NeonRush2077 {
         this.state.particles = [];
         this.state.totalHeight = 0;
         this.state.cameraY = 0;
+        
         this.state.player = {
             x: this.canvas.width / 2,
-            y: this.canvas.height - 160,
-            width: 55, height: 35, vx: 0
+            y: this.canvas.height - 180,
+            width: 55,
+            height: 35,
+            vx: 0
         };
-
-        // FIX: Enable canvas touch-action:none only now (during gameplay)
-        this.canvas.style.touchAction = 'none';
 
         document.getElementById('hud').style.display = 'flex';
         this.showScreen(null);
         this.updateHUD();
-
-        // Show touch hint briefly
-        const hint = document.getElementById('touchHint');
-        hint.style.display = 'block';
-        hint.style.opacity = '1';
-        setTimeout(() => {
-            hint.style.opacity = '0';
-            setTimeout(() => hint.style.display = 'none', 1000);
-        }, 2500);
     }
 
     stopGame() {
         this.state.gameRunning = false;
         document.getElementById('hud').style.display = 'none';
-        document.getElementById('touchHint').style.display = 'none';
-        // FIX: Restore normal touch behavior when returning to menus
-        this.canvas.style.touchAction = 'auto';
     }
 
     async withdraw() {
         if (!this.state.currentUser) { alert('Please login first!'); return; }
         if (!this.state.currentUser.wallet) {
-            alert('❌ No wallet set!\nPlease use SET WALLET first.');
+            alert('No wallet set! Please use SET WALLET first.');
             return;
         }
-        const MIN = 1000;
-        if (this.state.balance < MIN) {
-            alert(`❌ Need at least ${MIN} PMT to withdraw!\nYou have: ${this.state.balance.toFixed(3)} PMT\nNeed: ${(MIN - this.state.balance).toFixed(3)} more`);
+        if (this.state.balance < 1000) {
+            alert(`Need 1000 PMT to withdraw! You have: ${this.state.balance.toFixed(3)} PMT`);
             return;
         }
-        const ok = confirm(
-            `💰 WITHDRAWAL REQUEST\n\nAmount: ${this.state.balance.toFixed(3)} PMT\nTo: ${this.state.currentUser.wallet}\nNetwork: BNB Chain\n\n⚠️ Ensure wallet is on BSC Mainnet!\nProceed?`
-        );
-        if (!ok) return;
+        
         try {
             const btn = document.getElementById('withdrawBtn');
-            btn.textContent = '⏳ PROCESSING...';
+            btn.textContent = 'PROCESSING...';
             btn.disabled = true;
+
             const response = await fetch(`${BACKEND_URL}/reward-player`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1047,39 +1036,31 @@ class NeonRush2077 {
                     score: Math.floor(this.state.balance * 1000)
                 })
             });
+
             const data = await response.json();
+
             if (data.success) {
                 this.state.balance = 0;
                 this.state.currentUser.balance = 0;
                 this.saveUserProgress();
                 this.updateUserDisplay();
                 if (typeof confetti === 'function') confetti({ particleCount: 200, spread: 120 });
-                alert(`✅ WITHDRAWAL SUCCESSFUL!\n\nAmount: ${data.tokensTransferred} PMT\nTX: ${data.transactionHash}\n\nView: ${data.explorerLink}`);
+                alert(`Withdrawal successful! Amount: ${data.tokensTransferred} PMT`);
             } else {
-                alert('❌ Withdrawal failed:\n' + data.error);
+                alert('Withdrawal failed: ' + data.error);
             }
         } catch (err) {
-            alert('❌ Backend offline!\nMake sure backend is running.');
+            alert('Backend offline. Please try again later.');
         } finally {
-            const btn = document.getElementById('withdrawBtn');
-            btn.textContent = '💰 WITHDRAW PMT';
+            btn.textContent = 'WITHDRAW PMT';
             btn.disabled = false;
         }
     }
 
     showScreen(name) {
         document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-        if (name) {
-            document.getElementById(name).classList.remove('hidden');
-            // FIX: Restore touch-action when showing UI screens
-            this.canvas.style.touchAction = 'auto';
-        }
+        if (name) document.getElementById(name).classList.remove('hidden');
         if (name === 'mainMenu') this.updateUserDisplay();
-        if (!name) {
-            document.getElementById('hud').style.display = 'flex';
-            // FIX: Enable touch-action:none on canvas for gameplay
-            this.canvas.style.touchAction = 'none';
-        }
     }
 
     updateHUD() {
@@ -1100,10 +1081,13 @@ class NeonRush2077 {
 
     update() {
         const s = this.state;
+        
         if (s.keys['ArrowLeft']) s.player.vx = -9;
         if (s.keys['ArrowRight']) s.player.vx = 9;
+        
         s.player.x += s.player.vx;
         s.player.x = Math.max(45, Math.min(this.canvas.width - 45, s.player.x));
+
         s.cameraY -= s.scrollSpeed;
         s.totalHeight += s.scrollSpeed;
 
@@ -1189,18 +1173,13 @@ class NeonRush2077 {
         }
         ctx.globalAlpha = 1;
 
-        const neb = ctx.createRadialGradient(W/2, H/2, 50, W/2, H/2, W*0.7);
-        neb.addColorStop(0, 'rgba(0,255,255,0.015)');
-        neb.addColorStop(1, 'transparent');
-        ctx.fillStyle = neb;
-        ctx.fillRect(0, 0, W, H);
-
-        // SU-57
         const px = s.player.x;
         const py = s.player.y;
+        
         ctx.save();
         ctx.shadowColor = '#00ffff';
         ctx.shadowBlur = 15;
+        
         ctx.fillStyle = '#3a3a4a';
         ctx.beginPath();
         ctx.moveTo(px, py);
@@ -1215,11 +1194,12 @@ class NeonRush2077 {
         ctx.lineTo(px + 12, py + 12);
         ctx.closePath();
         ctx.fill();
+        
         ctx.fillStyle = '#00ccff';
-        ctx.shadowBlur = 12;
         ctx.beginPath();
         ctx.ellipse(px, py + 6, 6, 8, 0, 0, Math.PI * 2);
         ctx.fill();
+        
         ctx.strokeStyle = '#00ffff';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
@@ -1230,53 +1210,23 @@ class NeonRush2077 {
         ctx.moveTo(px + 8, py + 18);
         ctx.lineTo(px + 28, py + 30);
         ctx.stroke();
-        ctx.fillStyle = '#2a2a3a';
-        ctx.beginPath();
-        ctx.moveTo(px - 12, py + 30);
-        ctx.lineTo(px - 8, py + 22);
-        ctx.lineTo(px - 4, py + 30);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(px + 12, py + 30);
-        ctx.lineTo(px + 8, py + 22);
-        ctx.lineTo(px + 4, py + 30);
-        ctx.fill();
+        
         ctx.fillStyle = '#ff4400';
         ctx.shadowColor = '#ff6600';
-        ctx.shadowBlur = 18;
         ctx.beginPath();
         ctx.moveTo(px - 6, py + 38);
         ctx.lineTo(px, py + 42 + Math.random() * 4);
         ctx.lineTo(px + 6, py + 38);
         ctx.fill();
+        
         ctx.fillStyle = '#ffaa00';
         ctx.beginPath();
         ctx.moveTo(px - 4, py + 38);
         ctx.lineTo(px, py + 40 + Math.random() * 3);
         ctx.lineTo(px + 4, py + 38);
         ctx.fill();
-        ctx.fillStyle = 'rgba(255,255,255,0.4)';
-        ctx.beginPath();
-        ctx.ellipse(px - 2, py + 4, 2, 3, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#ff0000';
-        ctx.shadowBlur = 5;
-        ctx.beginPath();
-        ctx.moveTo(px - 20, py + 22);
-        ctx.lineTo(px - 18, py + 19);
-        ctx.lineTo(px - 16, py + 22);
-        ctx.lineTo(px - 19, py + 21);
-        ctx.fill();
+        
         ctx.restore();
-
-        if (Math.abs(s.player.vx) > 3) {
-            ctx.fillStyle = 'rgba(0,255,255,0.3)';
-            ctx.beginPath();
-            ctx.moveTo(px - (s.player.vx > 0 ? 25 : -25), py + 30);
-            ctx.lineTo(px - (s.player.vx > 0 ? 40 : -40), py + 28);
-            ctx.lineTo(px - (s.player.vx > 0 ? 40 : -40), py + 32);
-            ctx.fill();
-        }
 
         s.obstacles.forEach(o => {
             const sy = o.y - s.cameraY;
@@ -1284,9 +1234,6 @@ class NeonRush2077 {
             ctx.shadowBlur = 18;
             ctx.fillStyle = o.color;
             ctx.fillRect(o.x - o.width/2, sy, o.width, o.height);
-            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(o.x - o.width/2, sy, o.width, o.height);
             ctx.shadowBlur = 0;
         });
 
@@ -1317,36 +1264,23 @@ class NeonRush2077 {
             ctx.fill();
             ctx.restore();
         });
-
-        if (s.scrollSpeed > 7) {
-            ctx.strokeStyle = 'rgba(0,255,255,0.05)';
-            ctx.lineWidth = 1;
-            for (let i = 0; i < 8; i++) {
-                const lx = (i * W/8 + s.totalHeight * 0.3) % W;
-                ctx.beginPath();
-                ctx.moveTo(lx, 0);
-                ctx.lineTo(lx + 2, H);
-                ctx.stroke();
-            }
-        }
     }
 
     gameOver() {
         this.state.gameRunning = false;
         document.getElementById('hud').style.display = 'none';
-        document.getElementById('touchHint').style.display = 'none';
-        // FIX: Restore touch-action so game over buttons work
-        this.canvas.style.touchAction = 'auto';
 
         const earned = (this.state.score * 0.0005).toFixed(3);
         document.getElementById('finalScore').textContent = this.state.score;
         document.getElementById('finalHeight').textContent = Math.floor(this.state.totalHeight / 10);
         document.getElementById('earned').textContent = earned;
+
         if (this.state.currentUser) {
             this.state.balance += parseFloat(earned);
             this.state.currentUser.totalEarned += parseFloat(earned);
             this.saveUserProgress();
         }
+
         this.showScreen('gameOver');
     }
 
@@ -1362,7 +1296,9 @@ class NeonRush2077 {
         this.state.obstacles.push({
             x: Math.random() * (this.canvas.width - 100) + 50,
             y: this.state.cameraY - 50,
-            width: t.width, height: t.height, color: t.color
+            width: t.width,
+            height: t.height,
+            color: t.color
         });
     }
 
@@ -1396,14 +1332,6 @@ class NeonRush2077 {
                 color: '#ff0066', alpha: 1
             });
         }
-    }
-
-    boost() {
-        this.state.scrollSpeed += 4;
-        this.createParticles(this.state.player.x, this.state.player.y + 35, '#ff6600');
-        setTimeout(() => {
-            this.state.scrollSpeed = Math.max(4, this.state.scrollSpeed - 4);
-        }, 400);
     }
 }
 
